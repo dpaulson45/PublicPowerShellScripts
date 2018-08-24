@@ -1,0 +1,2 @@
+# Confirm-ExchangeShell
+Function that is used to check to see if your PowerShell session has Exchange Managemnt Shell is loaded. If it isn't it can load it for you and set the exinstall and exbin directories for you. 
