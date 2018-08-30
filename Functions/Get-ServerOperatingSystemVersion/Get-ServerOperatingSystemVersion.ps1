@@ -2,7 +2,7 @@
 param(
 [string]$OSBuildNumberVersion
 )
-
+#Function Version 1.0
 if($OSBuildNumberVersion -eq [string]::Empty -or $OSBuildNumberVersion -eq $null)
 {
     Write-Verbose("Getting the local machine version build number")

@@ -6,7 +6,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-
+#Function Version 1.0
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 

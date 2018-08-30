@@ -3,7 +3,7 @@ param(
 [bool]$LoadExchangeShell = $true,
 [bool]$LoadExchangeVariables = $true  
 )
-
+#Function Version 1.0
 $passed = $false 
 #Test that we are on Exchange 2010 or newer
 if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or 
