@@ -1,31 +1,64 @@
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$Folder,
-[Parameter(Mandatory=$false)][bool]$IncludeMonthDay = $false
+[Parameter(Mandatory=$false)][bool]$IncludeMonthDay = $false,
+[Parameter(Mandatory=$false)][bool]$IncludeDisplayZipping = $true,
+[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
+[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
+Function Write-VerboseWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($VerboseFunctionCaller -eq $null)
+    {
+        Write-Verbose $WriteString
+    }
+    else 
+    {
+        &$VerboseFunctionCaller $WriteString
+    }
+}
+
+Function Write-HostWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($HostFunctionCaller -eq $null)
+    {
+        Write-Host $WriteString
+    }
+    else
+    {
+        &$HostFunctionCaller $WriteString    
+    }
+}
 Function Enable-IOCompression
 {
     $oldErrorAction = $ErrorActionPreference
     $ErrorActionPreference = "Stop"
     $successful = $true 
+    Write-VerboseWriter("Calling: Enable-IOCompression")
     try 
     {
         Add-Type -AssemblyName System.IO.Compression.Filesystem 
     }
     catch 
     {
-        Write-Host("[{0}] : Failed to load .NET Compression assembly. Unable to zip up the data." -f $env:COMPUTERNAME)
+        Write-HostWriter("Failed to load .NET Compression assembly. Unable to compress up the data.")
         $successful = $false 
     }
     finally 
     {
         $ErrorActionPreference = $oldErrorAction
     }
+    Write-VerboseWriter("Returned: [bool]{0}" -f $successful)
     return $successful
 }
 Function Confirm-IOCompression 
 {
+    Write-VerboseWriter("Calling: Confirm-IOCompression")
     $assemblies = [Appdomain]::CurrentDomain.GetAssemblies()
     $successful = $false
     foreach($assembly in $assemblies)
@@ -36,15 +69,25 @@ Function Confirm-IOCompression
             break 
         }
     }
+    Write-VerboseWriter("Returned: [bool]{0}" -f $successful)
     return $successful
 }
 
 Function Compress-Now
 {
+    Write-VerboseWriter("Calling: Compress-Now ")
     $zipFolder = Get-ZipFolderName -Folder $Folder -IncludeMonthDay $IncludeMonthDay
+    if($IncludeDisplayZipping)
+    {
+        Write-HostWriter("Compressing Folder {0}" -f $Folder)
+    }
+    $timer = [System.Diagnostics.Stopwatch]::StartNew()
     [System.IO.Compression.ZipFile]::CreateFromDirectory($Folder, $zipFolder)
+    $timer.Stop()
+    Write-VerboseWriter("Time took to compress folder {0} seconds" -f $timer.Elapsed.TotalSeconds)
     if((Test-Path -Path $zipFolder))
     {
+        Write-VerboseWriter("Compress successful, removing folder.")
         Remove-Item $Folder -Force -Recurse 
     }
 }
@@ -54,6 +97,8 @@ param(
 [Parameter(Mandatory=$true)][string]$Folder,
 [Parameter(Mandatory=$false)][bool]$IncludeMonthDay = $false
 )
+    Write-VerboseWriter("Calling: Get-ZipFolderName")
+    Write-VerboseWriter("Passed - [string]Folder:{0} | [bool]IncludeMonthDay:{1}" -f $Folder, $IncludeMonthDay)
     if($IncludeMonthDay)
     {
         $zipFolderNoEXT = "{0}-{1}" -f $Folder, (Get-Date -Format Md)
@@ -62,7 +107,7 @@ param(
     {
         $zipFolderNoEXT = $Folder
     }
-
+    Write-VerboseWriter("[string]zipFolderNoEXT: {0}" -f $zipFolderNoEXT)
     $zipFolder = "{0}.zip" -f $zipFolderNoEXT
     if(Test-Path $zipFolder)
     {
@@ -72,21 +117,40 @@ param(
             $i++
         }while(Test-Path $zipFolder)
     }
+    Write-VerboseWriter("Returned: [string]zipFolder {0}" -f $zipFolder)
     return $zipFolder
 }
+$passedVerboseFunctionCaller = $false
+$passedHostFunctionCaller = $false
+if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
+if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 
-if(Confirm-IOCompression)
+Write-VerboseWriter("Calling: Compress-Folder")
+Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping{1} | [scriptblock]VerboseFunctionCaller:{2} | [scriptblock]HostFunctionCaller:{3}" -f $Folder, 
+$IncludeDisplayZipping,
+$passedVerboseFunctionCaller,
+$passedHostFunctionCaller)
+
+if(Test-Path $Folder)
 {
-    Compress-Now
-}
-else
-{
-    if(Enable-IOCompression)
+    if(Confirm-IOCompression)
     {
         Compress-Now
     }
     else
     {
-        Write-Host("Unable to compress folder {0}" -f $Folder)
+        if(Enable-IOCompression)
+        {
+            Compress-Now
+        }
+        else
+        {
+            Write-HostWriter("Unable to compress folder {0}" -f $Folder)
+            Write-VerboseWriter("Unable to enable IO compression on this system")
+        }
     }
+}
+else
+{
+    Write-HostWriter("Failed to find the folder {0}" -f $Folder)
 }
