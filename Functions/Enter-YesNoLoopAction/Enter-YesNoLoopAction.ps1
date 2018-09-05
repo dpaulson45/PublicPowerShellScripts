@@ -28,7 +28,7 @@ Write-VerboseWriter("Passed: [string]Question: {0} | [bool]VerboseFunctionCaller
 $passedVerboseFunctionCaller)
 
 do{
-    $answer = Read-Host ("{0} 'y' or 'n'" -f $Question)
+    $answer = Read-Host ("{0} ('y' or 'n')" -f $Question)
     Write-VerboseWriter("Read-Host answer: {0}" -f $answer)
 }while($answer -ne 'n' -and $answer -ne 'y')
 
