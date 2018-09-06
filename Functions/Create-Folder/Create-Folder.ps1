@@ -56,6 +56,6 @@ else
 {
     if($IncludeDisplayCreate)
     {
-        Write-HostWriter("Directory {1} is already created!" -f $NewFolder)
+        Write-HostWriter("Directory {0} is already created!" -f $NewFolder)
     }
 }

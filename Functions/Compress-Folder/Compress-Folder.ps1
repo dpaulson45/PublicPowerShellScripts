@@ -127,7 +127,7 @@ if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
 if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 
 Write-VerboseWriter("Calling: Compress-Folder")
-Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping{1} | [scriptblock]VerboseFunctionCaller:{2} | [scriptblock]HostFunctionCaller:{3}" -f $Folder, 
+Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping: {1} | [scriptblock]VerboseFunctionCaller: {2} | [scriptblock]HostFunctionCaller: {3}" -f $Folder, 
 $IncludeDisplayZipping,
 $passedVerboseFunctionCaller,
 $passedHostFunctionCaller)
