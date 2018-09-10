@@ -2,6 +2,7 @@
 param(
 [Parameter(Mandatory=$true)][array]$ServersWithArguments,
 [Parameter(Mandatory=$true)][scriptblock]$ScriptBlock,
+[Parameter(Mandatory=$false)][string]$JobBatchName,
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJob = $true,
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInVerboseFunction, 
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInCorrectFunction,
@@ -10,7 +11,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.2
+#Function Version 1.3
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -48,6 +49,7 @@ Function Write-ReceiveJobData {
 param(
 [Parameter(Mandatory=$true)][array]$ReceiveJobData
 )
+    $returnJob = [string]::Empty
     foreach($job in $ReceiveJobData)
     {
         if($job["Verbose"])
@@ -58,11 +60,16 @@ param(
         {
             Write-HostWriter($job["Host"])
         }
+        elseif($job["ReturnObject"])
+        {
+            $returnJob = $job["ReturnObject"]
+        }
         else 
         {
             Write-VerboseWriter("Unable to determine the key for the return type.")    
         }
     }
+    return $returnJob
 }
 
 Function Start-Jobs {
@@ -120,13 +127,17 @@ Function Wait-JobsCompleted {
             }
             elseif($DisplayReceiveJobInCorrectFunction -and (-not ($receiveJobNull)))
             {
-                Write-ReceiveJobData -ReceiveJobData $receiveJob
+                $returnJobData = Write-ReceiveJobData -ReceiveJobData $receiveJob
+                if($returnJobData -ne $null)
+                {
+                    $returnData.Add($jobName, $returnJobData)
+                }
             }
             elseif($DisplayReceiveJob -and (-not($receiveJobNull)))
             {
                 Write-HostWriter $receiveJob
             }
-            if($NeedReturnData)
+            if($NeedReturnData -and (-not($DisplayReceiveJobInCorrectFunction)))
             {
                 $returnData.Add($job.Name, $receiveJob)
             }
@@ -143,7 +154,8 @@ Function Wait-JobsCompleted {
 
 [System.Diagnostics.Stopwatch]$timerMain = [System.Diagnostics.Stopwatch]::StartNew()
 Write-VerboseWriter("Calling Start-JobManager")
-Write-VerboseWriter("Passed: [bool]DisplayReceiveJob: {0} | [bool]DisplayReceiveJobInVerboseFunction: {1} | [bool]NeedReturnData:{2} | [scriptblock]VerboseFunctionCaller: {3} | [scriptblock]HostFunctionCaller: {4}" -f $DisplayReceiveJob,
+Write-VerboseWriter("Passed: [bool]DisplayReceiveJob: {0} | [string]JobBatchName: {1} | [bool]DisplayReceiveJobInVerboseFunction: {2} | [bool]NeedReturnData:{3} | [scriptblock]VerboseFunctionCaller: {4} | [scriptblock]HostFunctionCaller: {5}" -f $DisplayReceiveJob,
+$JobBatchName,
 $DisplayReceiveJobInVerboseFunction,
 $NeedReturnData,
 $passedVerboseFunctionCaller,
