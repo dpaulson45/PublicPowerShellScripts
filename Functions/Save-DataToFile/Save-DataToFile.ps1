@@ -61,5 +61,5 @@ if($DataIn -ne [string]::Empty)
 }
 else
 {
-    Write-VerboseWriter("DataIn was an empty string. No going to save anything.")
+    Write-VerboseWriter("DataIn was an empty string. Not going to save anything.")
 }
