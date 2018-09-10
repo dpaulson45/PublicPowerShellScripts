@@ -4,12 +4,13 @@ param(
 [Parameter(Mandatory=$true)][scriptblock]$ScriptBlock,
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJob = $true,
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInVerboseFunction, 
+[Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInCorrectFunction,
 [Parameter(Mandatory=$false)][bool]$NeedReturnData = $false,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -43,6 +44,27 @@ $passedHostFunctionCaller = $false
 if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
 if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 
+Function Write-ReceiveJobData {
+param(
+[Parameter(Mandatory=$true)][array]$ReceiveJobData
+)
+    foreach($job in $ReceiveJobData)
+    {
+        if($job["Verbose"])
+        {
+            Write-VerboseWriter($job["Verbose"])
+        }
+        elseif($job["Host"])
+        {
+            Write-HostWriter($job["Host"])
+        }
+        else 
+        {
+            Write-VerboseWriter("Unable to determine the key for the return type.")    
+        }
+    }
+}
+
 Function Start-Jobs {
     Write-VerboseWriter("Calling Start-Jobs")
     foreach($serverObject in $ServersWithArguments)
@@ -66,6 +88,7 @@ Function Confirm-JobsPending {
 Function Wait-JobsCompleted {
     Write-VerboseWriter("Calling Wait-JobsCompleted")
     [System.Diagnostics.Stopwatch]$timer = [System.Diagnostics.Stopwatch]::StartNew()
+    $returnData = @{}
     while(Confirm-JobsPending)
     {
         $completedJobs = Get-Job | Where-Object {$_.State -ne "Running"}
@@ -75,7 +98,6 @@ Function Wait-JobsCompleted {
             continue 
         }
 
-        $returnData = @{}
         foreach($job in $completedJobs)
         {
             $receiveJobNull = $false 
@@ -95,6 +117,10 @@ Function Wait-JobsCompleted {
             if($DisplayReceiveJobInVerboseFunction -and(-not($receiveJobNull)))
             {
                 Write-VerboseWriter("[JobName: {0}] : {1}" -f $jobName, $receiveJob)
+            }
+            elseif($DisplayReceiveJobInCorrectFunction -and (-not ($receiveJobNull)))
+            {
+                Write-ReceiveJobData -ReceiveJobData $receiveJob
             }
             elseif($DisplayReceiveJob -and (-not($receiveJobNull)))
             {
