@@ -3,11 +3,12 @@ param(
 [Parameter(Mandatory=$true)][string]$Folder,
 [Parameter(Mandatory=$false)][bool]$IncludeMonthDay = $false,
 [Parameter(Mandatory=$false)][bool]$IncludeDisplayZipping = $true,
+[Parameter(Mandatory=$false)][bool]$ReturnCompressedLocation = $false,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -34,6 +35,29 @@ param(
     {
         &$HostFunctionCaller $WriteString    
     }
+}
+
+Function Get-DirectorySize {
+param(
+[Parameter(Mandatory=$true)][string]$Directory,
+[Parameter(Mandatory=$false)][bool]$IsCompressed = $false 
+)
+    Write-VerboseWriter("Calling: Get-DirectorySize")
+    Write-VerboseWriter("Passed: [string]Directory: {0} | [bool]IsCompressed: {1}" -f $Directory, $IsCompressed)
+    $itemSize = 0
+    if($IsCompressed)
+    {
+        $itemSize = (Get-Item $Directory).Length 
+    }
+    else 
+    {
+        $childItems = Get-ChildItem $Directory -Recurse | Where-Object{-not($_.Mode.StartsWith("d-"))}
+        foreach($item in $childItems)
+        {
+            $itemSize += $item.Length
+        }
+    }
+    return $itemSize
 }
 Function Enable-IOCompression
 {
@@ -82,14 +106,21 @@ Function Compress-Now
     {
         Write-HostWriter("Compressing Folder {0}" -f $Folder)
     }
+    $sizeBytesBefore = Get-DirectorySize -Directory $Folder
     $timer = [System.Diagnostics.Stopwatch]::StartNew()
     [System.IO.Compression.ZipFile]::CreateFromDirectory($Folder, $zipFolder)
     $timer.Stop()
-    Write-VerboseWriter("Time took to compress folder {0} seconds" -f $timer.Elapsed.TotalSeconds)
+    $sizeBytesAfter = Get-DirectorySize -Directory $zipFolder -IsCompressed $true
+    Write-VerboseWriter("Compressing directory size of {0} MB down to the size of {1} MB took {2} seconds." -f ($sizeBytesBefore / 1MB), ($sizeBytesAfter / 1MB),  $timer.Elapsed.TotalSeconds)
+    
     if((Test-Path -Path $zipFolder))
     {
         Write-VerboseWriter("Compress successful, removing folder.")
         Remove-Item $Folder -Force -Recurse 
+    }
+    if($ReturnCompressedLocation)
+    {
+        Set-Variable -Name compressedLocation -Value $zipFolder -Scope 1 
     }
 }
 
@@ -127,11 +158,13 @@ if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
 if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 
 Write-VerboseWriter("Calling: Compress-Folder")
-Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping: {1} | [scriptblock]VerboseFunctionCaller: {2} | [scriptblock]HostFunctionCaller: {3}" -f $Folder, 
+Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping: {1} | [bool]ReturnCompressedLocation: {2} | [scriptblock]VerboseFunctionCaller: {3} | [scriptblock]HostFunctionCaller: {4}" -f $Folder, 
 $IncludeDisplayZipping,
+$ReturnCompressedLocation,
 $passedVerboseFunctionCaller,
 $passedHostFunctionCaller)
 
+$compressedLocation = [string]::Empty
 if(Test-Path $Folder)
 {
     if(Confirm-IOCompression)
@@ -154,4 +187,9 @@ if(Test-Path $Folder)
 else
 {
     Write-HostWriter("Failed to find the folder {0}" -f $Folder)
+}
+if($ReturnCompressedLocation)
+{
+    Write-VerboseWriter("Returning: {0}" -f $compressedLocation)
+    return $compressedLocation
 }
