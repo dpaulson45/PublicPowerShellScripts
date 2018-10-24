@@ -1,0 +1,2 @@
+# New-MailMessageObject
+Function that is used to create an object for you to be able to send a mail message. This is useful for a script design of monitoring for an issue and to get an easy notification. 
