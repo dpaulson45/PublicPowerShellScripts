@@ -11,11 +11,12 @@ param(
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
+#Function Version 1.0
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
 }
-if($EtlFileSize -le 100 -or $EtlFileSize -ge 1000)
+if($EtlFileSize -lt 100 -or $EtlFileSize -gt 1000)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EtlFileSize. Use a value between 100 and 1000"
 }
