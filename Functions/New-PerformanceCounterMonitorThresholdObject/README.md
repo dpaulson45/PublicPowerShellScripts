@@ -1,0 +1,2 @@
+# New-PerformanceCounterMonitorThresholdObject
+Function that is used to create an object for you to be able to monitor performance counters on a computer going above a particular average or a min/max threshold limit.
