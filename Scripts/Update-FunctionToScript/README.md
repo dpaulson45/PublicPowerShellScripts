@@ -1,0 +1,2 @@
+# Update-FunctionToScript
+Script that is used to quickly add a function from GitHub's RAW file location of a Function file to be added to a local script. This script makes it easy to update all the functions in your script or manually provide which ones you want to get updated. 
