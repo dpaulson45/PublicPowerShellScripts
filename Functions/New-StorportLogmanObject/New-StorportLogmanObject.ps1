@@ -21,9 +21,9 @@ if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
 }
-if($EtlFileSize -lt 100 -or $EtlFileSize -gt 1000)
+if($EtlFileSize -lt 100 -or $EtlFileSize -gt 10000)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EtlFileSize. Use a value between 100 and 1000"
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EtlFileSize. Use a value between 100 and 10000"
 }
 if([string]::IsNullOrEmpty($SavePath.Trim()))
 {
@@ -92,9 +92,9 @@ Function New-ServersStatusObject {
     {
         $statusObject = New-Object pscustomobject
         $statusObject | Add-Member -MemberType NoteProperty -Name "CreateStartResults" -Value ([string]::Empty)
-        $statusObject | Add-Member -MemberType NoteProperty -Name "CreateStartStatusCode" -Value ([ExtraLogman.StatusCode]::None)
+        $statusObject | Add-Member -MemberType NoteProperty -Name "CreateStartStatusCode" -Value ([StorportLogman.StatusCode]::None)
         $statusObject | Add-Member -MemberType NoteProperty -Name "StoppedResults" -Value ([string]::Empty)
-        $statusObject | Add-Member -MemberType NoteProperty -Name "StoppedStatusCode" -Value ([ExtraLogman.StatusCode]::None)
+        $statusObject | Add-Member -MemberType NoteProperty -Name "StoppedStatusCode" -Value ([StorportLogman.StatusCode]::None)
 
         $hasher.Add($server,$statusObject)
     }
