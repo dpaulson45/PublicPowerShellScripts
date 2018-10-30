@@ -12,7 +12,7 @@ param(
     For example: "\\*\Process(*)\% Privileged Time","\\*\Process(*)\% Processor Time","\\*\Process(*)\% User Time","\\*\Process(*)\Creating Process ID",..... so on
 #>
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
