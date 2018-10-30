@@ -19,6 +19,11 @@ if($webResponse.StatusCode -ne 200)
 $webContent = $webResponse.Content 
 $functionName = $WebUri.Substring(($WebUri.LastIndexOf("/")) + 1).Replace(".ps1","")
 
+if($webContent.Contains("Template Functions"))
+{
+    $webContent = $webContent.Replace("Template Functions",("{0} -- Template Functions" -f $functionName))
+}
+
 $scriptContent = Get-Content $ScriptLocation
 $startIndex = 0 
 while($startIndex -lt $scriptContent.count)
