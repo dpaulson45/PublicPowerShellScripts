@@ -195,7 +195,7 @@ $params = @{
 
 if($Counters -ne $null -and $Counters.count -gt 0)
 {
-    $fastCounters = Get-FastCounterNames -FilePaths $filePaths
+    $fastCounters = Get-FastCounterNames -FilePaths ($filePaths[0])
     $params.Add("Counter", $fastCounters)
 }
 
