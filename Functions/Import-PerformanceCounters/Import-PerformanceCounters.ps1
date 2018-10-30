@@ -203,7 +203,8 @@ $totalSize = 0
 Write-VerboseWriter("Importing files from batch list")
 foreach($file in $filePaths)
 {
-    Write-VerboseWriter("File Size {0}MB. File Name: {1}." -f ($totalSize += (Get-Item $file).Length / 1MB), $file )
+    Write-VerboseWriter("File Size {0}MB. File Name: {1}." -f ($size = (Get-Item $file).Length / 1MB), $file )
+    $totalSize += $size
 }
 [System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
 $importCounters = (Import-Counter @params).CounterSamples
