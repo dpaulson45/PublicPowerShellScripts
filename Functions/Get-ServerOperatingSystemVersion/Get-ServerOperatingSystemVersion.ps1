@@ -3,7 +3,7 @@ Function Get-ServerOperatingSystemVersion {
 param(
 [string]$OSBuildNumberVersion
 )
-#Function Version 1.1
+#Function Version 1.2
 if($OSBuildNumberVersion -eq [string]::Empty -or $OSBuildNumberVersion -eq $null)
 {
     Write-Verbose("Getting the local machine version build number")
@@ -15,7 +15,7 @@ else
     Write-Verbose("Passed - [string]OSBuildNumberVersion : {0}" -f $OSBuildNumberVersion)
 }
 
-$osReturnValue
+[string]$osReturnValue = ""
 switch ($OSBuildNumberVersion) 
 {
     "6.0.6000" {$osReturnValue = "Windows2008"}
@@ -29,5 +29,5 @@ switch ($OSBuildNumberVersion)
 }
 
 Write-Verbose("Returned: {0}" -f $osReturnValue)
-return $osReturnValue
+return [string]$osReturnValue
 }
