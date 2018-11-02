@@ -1,3 +1,4 @@
+Function Confirm-ExchangeShell {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][bool]$LoadExchangeShell = $true,
@@ -5,7 +6,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -107,3 +108,4 @@ else
 }
 Write-VerboseWriter("Returned: {0}" -f $passed)
 return $passed
+}

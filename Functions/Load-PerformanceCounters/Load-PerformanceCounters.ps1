@@ -1,3 +1,4 @@
+Function Load-PerformanceCounters {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$Directory,
@@ -7,7 +8,7 @@ param(
 [Parameter(Mandatory=$false)][array]$Counters
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
@@ -427,3 +428,4 @@ Write-VerboseWriter("[{0}]: Additional time taken to add TimeHash {1} seconds" -
 Write-VerboseWriter("[{0}]: Finished building objects off the data. Completed in {1} seconds" -f [datetime]::Now, $stopWatch.Elapsed.TotalSeconds)
 Write-VerboseWriter("[{0}]: Total time taken {1} seconds" -f [datetime]::Now, $stopWatchTotal.Elapsed.TotalSeconds)
 return $hashtable
+}

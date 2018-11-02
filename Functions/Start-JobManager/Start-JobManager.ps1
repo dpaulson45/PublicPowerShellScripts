@@ -1,3 +1,4 @@
+Function Start-JobManager {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][array]$ServersWithArguments,
@@ -11,7 +12,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.3
+#Function Version 1.4
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -170,3 +171,4 @@ if($NeedReturnData)
     return $data
 }
 return $null
+}

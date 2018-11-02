@@ -1,3 +1,4 @@
+Function Compress-Folder {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$Folder,
@@ -8,7 +9,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -192,4 +193,5 @@ if($ReturnCompressedLocation)
 {
     Write-VerboseWriter("Returning: {0}" -f $compressedLocation)
     return $compressedLocation
+}
 }

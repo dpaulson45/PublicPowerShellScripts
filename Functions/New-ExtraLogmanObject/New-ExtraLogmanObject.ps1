@@ -1,3 +1,4 @@
+Function New-ExtraLogmanObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$LogmanName = "ExchangeLogman",
@@ -11,7 +12,7 @@ param(
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
-#Function Version 1.0
+#Function Version 1.1
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -319,3 +320,4 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -V
 
 
 return $logmanObject 
+}

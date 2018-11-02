@@ -1,9 +1,10 @@
+Function Get-CounterSampleToCounterObjectName {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][object]$PerformanceCounterSample
 )
 
-#Function Version 1.1
+#Function Version 1.2
 
 $counterObj = New-Object -TypeName pscustomobject
 $FullName = $PerformanceCounterSample.Path 
@@ -27,3 +28,4 @@ $counterObj | Add-Member -MemberType NoteProperty -Name "InstanceName" -Value $i
 $counterObj | Add-Member -MemberType NoteProperty -Name "CounterName" -Value ($FullName.Substring($startOfCounterIndex))
 
 return $counterObj
+}

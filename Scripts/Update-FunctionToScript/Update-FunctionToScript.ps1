@@ -66,13 +66,9 @@ while($index -lt $startIndex)
 if($fullAdd)
 {
     $updateScript += ""
-    $updateScript += ""
     $updateScript += "# Template Master: {0}" -f $WebUri
-    $updateScript += (("Function {0} " -f $functionName) + "{")
     $updateScript += $webContent
-    $updateScript += "}"
     $updateScript += "# End Function {0}" -f $functionName
-    $updateScript += ""
     $updateScript += ""
 }
 else 
@@ -88,9 +84,7 @@ else
     }
 
     $index = $endIndex
-    $updateScript += (("Function {0} " -f $functionName) + "{")
     $updateScript += $webContent
-    $updateScript += "}"
 }
 while($index -lt $scriptContent.count)
 {

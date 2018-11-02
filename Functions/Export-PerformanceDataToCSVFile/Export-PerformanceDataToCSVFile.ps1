@@ -1,10 +1,11 @@
+Function Export-PerformanceDataToCSVFile {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][hashtable]$LoadedPerfObject,
 [Parameter(Mandatory=$true)][string]$FullSavePath
 )
 
-#Function Version 1.0
+#Function Version 1.1
 #[hashtable]LoadedPerfObject - return object from Load-PerformanceCounters:  https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
 ########################
 #
@@ -70,3 +71,4 @@ while($index -lt $masterCount)
 }
 
 $timeList | Export-Csv $FullSavePath
+}

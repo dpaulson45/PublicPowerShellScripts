@@ -1,3 +1,4 @@
+Function Create-Folder {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$NewFolder,
@@ -8,7 +9,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
@@ -84,4 +85,5 @@ else
 if($InvokeCommandReturnWriteArray)
 {
     return $stringArray
+}
 }

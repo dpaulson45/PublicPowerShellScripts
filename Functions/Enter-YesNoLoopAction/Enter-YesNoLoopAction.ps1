@@ -1,3 +1,4 @@
+Function Enter-YesNoLoopAction {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$Question,
@@ -6,7 +7,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
@@ -39,4 +40,5 @@ if($answer -eq 'y')
 else 
 {
     &$NoAction
+}
 }

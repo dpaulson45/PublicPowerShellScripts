@@ -1,3 +1,4 @@
+Function New-PerformanceCounterMonitorThresholdObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][hashtable]$Perfcounters,
@@ -19,7 +20,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.0
+#Function Version 1.1
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -268,5 +269,5 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
     return [PerfCounterMonitor.StatusCode]::Passed
 }
 
-
 return $perfMonitorObject
+}

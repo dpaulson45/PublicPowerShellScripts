@@ -1,3 +1,4 @@
+Function Import-PerformanceCounters {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$Directory,
@@ -12,7 +13,7 @@ param(
     For example: "\\*\Process(*)\% Privileged Time","\\*\Process(*)\% Processor Time","\\*\Process(*)\% User Time","\\*\Process(*)\Creating Process ID",..... so on
 #>
 
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
@@ -194,3 +195,4 @@ foreach($file in $filePaths)
 $importCounters = (Import-Counter @params).CounterSamples
 Write-VerboseWriter("Took {0} seconds to import this batch size of {1}MB for {2} datapoints." -f $stopWatch.Elapsed.TotalSeconds, $totalSize, $importCounters.count)
 return $importCounters
+}

@@ -1,3 +1,4 @@
+Function New-MailMessageObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$SMTPSender,
@@ -10,7 +11,7 @@ param(
 [Parameter(Mandatory=$false)][string]$CustomTestMessageSubject = "Script Mail Message Object Test",
 [Parameter(Mandatory=$false)][string]$CustomTestMessageBody = "Test Worked!"
 )
-#Function Version 1.0
+#Function Version 1.1
 if([string]::IsNullOrWhiteSpace($CustomTestMessageSubject))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid CustomTestMessageSubject"
@@ -128,3 +129,4 @@ $mailObject | Add-Member -MemberType ScriptMethod -Name "GetExceptionReason" -Va
 }
 
 return $mailObject 
+}

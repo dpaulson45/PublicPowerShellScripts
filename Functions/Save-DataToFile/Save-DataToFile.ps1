@@ -1,3 +1,4 @@
+Function Save-DataToFile {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][object]$DataIn,
@@ -8,7 +9,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -62,4 +63,5 @@ if($DataIn -ne [string]::Empty)
 else
 {
     Write-VerboseWriter("DataIn was an empty string. Not going to save anything.")
+}
 }

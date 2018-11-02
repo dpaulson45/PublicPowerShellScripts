@@ -1,3 +1,4 @@
+Function New-StorportLogmanObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$LogmanName = "storport",
@@ -16,7 +17,7 @@ param(
 )
 
 #Following this blog: https://blogs.technet.microsoft.com/askcore/2013/04/25/tracing-with-storport-in-windows-2012-and-windows-8-with-kb2819476-hotfix/
-#Function Version 1.0
+#Function Version 1.1
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -187,3 +188,4 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman" -Value {
 }
 
 return $logmanObject
+}

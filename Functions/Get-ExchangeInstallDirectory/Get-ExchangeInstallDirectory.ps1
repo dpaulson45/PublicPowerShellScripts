@@ -1,3 +1,4 @@
+Function Get-ExchangeInstallDirectory {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][bool]$InvokeCommandReturnWriteArray,
@@ -5,7 +6,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
@@ -77,3 +78,4 @@ if($InvokeCommandReturnWriteArray)
     return $stringArray
 }
 return $installDirectory
+}

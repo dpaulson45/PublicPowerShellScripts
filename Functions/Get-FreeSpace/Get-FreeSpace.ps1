@@ -1,3 +1,4 @@
+Function Get-FreeSpace {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][ValidateScript({$_.ToString().EndsWith("\")})][string]$FilePath,
@@ -6,7 +7,7 @@ param(
 )
 
 
-#Function Version 1.0
+#Function Version 1.1
 Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
@@ -123,3 +124,4 @@ while($true)
 }
 
 return $freeSpaceSize
+}

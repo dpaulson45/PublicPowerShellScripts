@@ -1,3 +1,4 @@
+Function Get-PerformanceCounterMinMaxAverageCorrectly {
 [CmdletBinding()]
 param(
 [object]$PerformanceCounterSamples
@@ -17,7 +18,7 @@ https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-aver
     CounterType
 #>
 
-#Function Version 1.0
+#Function Version 1.1
 if($PerformanceCounterSamples -eq $null -or $PerformanceCounterSamples.Count -le 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounterSamples. Provide more than 1 sample as well."
@@ -58,3 +59,4 @@ $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Max" -Value $max
 $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Avg" -Value $avg
 
 return $minMaxAvgObj
+}

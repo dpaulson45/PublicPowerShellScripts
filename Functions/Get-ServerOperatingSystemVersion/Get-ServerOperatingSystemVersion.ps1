@@ -1,8 +1,9 @@
+Function Get-ServerOperatingSystemVersion {
 [CmdletBinding()]
 param(
 [string]$OSBuildNumberVersion
 )
-#Function Version 1.0
+#Function Version 1.1
 if($OSBuildNumberVersion -eq [string]::Empty -or $OSBuildNumberVersion -eq $null)
 {
     Write-Verbose("Getting the local machine version build number")
@@ -29,3 +30,4 @@ switch ($OSBuildNumberVersion)
 
 Write-Verbose("Returned: {0}" -f $osReturnValue)
 return $osReturnValue
+}

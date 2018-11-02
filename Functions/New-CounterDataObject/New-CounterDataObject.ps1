@@ -1,10 +1,11 @@
+Function New-CounterDataObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][array]$PerformanceCounterSamples
 )
 
 
-#Function Version 1.0
+#Function Version 1.1
 
 Add-Type @"
 using System; 
@@ -148,3 +149,4 @@ foreach($datapoint in $counterObj.GetData)
 }
 
 return $counterObj
+}

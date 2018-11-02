@@ -1,3 +1,4 @@
+Function Get-CuriousEventsFromPerformanceLogs {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][hashtable]$LoadedPerfObject,
@@ -7,7 +8,7 @@ param(
 [Parameter(Mandatory=$false)][bool]$ReturnData = $true 
 )
 
-#Function Version 1.0
+#Function Version 1.1
 <#
     [hashtable]LoadedPerfObject - return object from Load-PerformanceCounters:  https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
     
@@ -541,4 +542,5 @@ if($ExportDirectory -ne $null -and $SaveName -ne $null)
 if($ReturnData)
 {
     return $allIssuesDataPoints
+}
 }
