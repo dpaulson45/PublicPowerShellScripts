@@ -500,7 +500,7 @@ foreach($issue in $masterIssueList)
 {
     $startTime = $issue[0].AddSeconds(-$MultiThresholdConditionObject.ViewTimeSpanInSecondsBefore)
     $endTime = $issue[-1].AddSeconds($MultiThresholdConditionObject.ViewTimeSpanInSecondsAfter)
-
+    $issueStartTime = $issue[0]
     $hashCounterPathKey = @{}
     
     foreach($key in $LoadedPerfObject.Keys)
@@ -523,7 +523,7 @@ foreach($issue in $masterIssueList)
     }
 
     $obj = New-Object -TypeName pscustomobject 
-    $obj | Add-Member -MemberType NoteProperty -Name "StartOfIssue" -Value $startTime
+    $obj | Add-Member -MemberType NoteProperty -Name "StartOfIssue" -Value $issueStartTime
     $obj | Add-Member -MemberType NoteProperty -Name "HashData" -Value $hashCounterPathKey
     $allIssuesDataPoints.Add($obj)
 }
