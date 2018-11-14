@@ -12,6 +12,12 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
 )
 
+<#
+    [array]ServersWithArguments
+        [string]ServerName
+        [object]ArgumentList #customized for your scriptblock
+#>
+
 #Function Version 1.4
 Function Write-VerboseWriter {
 param(
