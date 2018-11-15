@@ -20,7 +20,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.1
+#Function Version 1.2
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -254,7 +254,7 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
             if($minMaxAvgResults.Avg -le $counterPassedObj.AverageThreshold)
             {
                 $details = "Met average threshold. Current average is '{0}' which is below the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Avg, $counterPassedObj.AverageThreshold, $counterName
-                $thresholdMet
+                $thresholdMet = $true 
             }   
         }
         if($thresholdMet)
