@@ -205,7 +205,7 @@ Function Start-Jobs {
     {
         $server = $serverObject.ServerName
         $argumentList = $serverObject.ArgumentList
-        $this.WriteVerboseWriter("Starting job on server {0}" -f $server)
+        $this.WriteVerboseWriter(("Starting job on server {0}" -f $server))
         Invoke-Command -ComputerName $server -ScriptBlock $ScriptBlock -ArgumentList $argumentList -AsJob -JobName $server | Out-Null
     }
 }
@@ -240,11 +240,11 @@ Function Wait-JobsCompleted {
             if($receiveJob -eq $null)
             {
                 $receiveJobNull = $True 
-                $this.WriteHostWriter("Job {0} didn't have any receive job data" -f $jobName)
+                $this.WriteHostWriter(("Job {0} didn't have any receive job data" -f $jobName))
             }
             if($DisplayReceiveJobInVerboseFunction -and(-not($receiveJobNull)))
             {
-                $this.WriteHostWriter("[JobName: {0}] : {1}" -f $jobName, $receiveJob)
+                $this.WriteHostWriter(("[JobName: {0}] : {1}" -f $jobName, $receiveJob))
             }
             elseif($DisplayReceiveJobInCorrectFunction -and (-not ($receiveJobNull)))
             {
@@ -265,7 +265,7 @@ Function Wait-JobsCompleted {
         }
     }
     $timer.Stop()
-    $this.WriteVerboseWriter("Waiting for jobs to complete took {0} seconds" -f $timer.Elapsed.TotalSeconds)
+    $this.WriteVerboseWriter(("Waiting for jobs to complete took {0} seconds" -f $timer.Elapsed.TotalSeconds))
     if($NeedReturnData)
     {
         return $returnData
@@ -278,7 +278,7 @@ Function Wait-JobsCompleted {
 Start-Jobs
 $data = Wait-JobsCompleted
 $timerMain.Stop()
-$this.WriteVerboseWriter("Exiting: Start-JobManager | Time in Start-JobManager: {0} seconds" -f $timerMain.Elapsed.TotalSeconds)
+$this.WriteVerboseWriter(("Exiting: Start-JobManager | Time in Start-JobManager: {0} seconds" -f $timerMain.Elapsed.TotalSeconds))
 if($NeedReturnData)
 {
     return $data
@@ -297,12 +297,13 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StopTrace" -Value {
         $obj | Add-Member -MemberType NoteProperty -Name "ArgumentList" -Value ([string]::Empty)
         $serversWithArguments += $obj 
     }
+    $this.WriteHostWriter(("[{0}] : Attempting to stop the netsh trace. This may take some time to complete." -f ([datetime]::Now)))
     $scriptBlock = [scriptblock]::Create("netsh trace stop")
     $results = $this.StartJobManager($serversWithArguments, $scriptBlock) 
     $allPassed = $true 
     foreach($server in $this.ServerList)
     {
-        $this.WriteVerboseWriter("Looking at server {0} to see if it worked to stop the trace" -f $server)
+        $this.WriteVerboseWriter(("Looking at server {0} to see if it worked to stop the trace" -f $server))
         $data = $results[$server]
         $this.ServerStatusDetails[$server] = $data
         $serverSuccess = $false 
@@ -329,12 +330,12 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StopTrace" -Value {
         }
         if($serverSuccess)
         {
-            $this.WriteVerboseWriter("Server {0} appears to have stopped the trace" -f $server)
+            $this.WriteVerboseWriter(("Server {0} appears to have stopped the trace" -f $server))
             $this.ServerStatus[$server] = [NetshTraceObject.StatusCode]::Success
         }
         else 
         {
-            $this.WriteVerboseWriter("Server {0} appears to have failed to stop the trace" -f $server)
+            $this.WriteVerboseWriter(("Server {0} appears to have failed to stop the trace" -f $server))
             $this.WriteVerboseWriter($data)
             $this.ServerStatus[$server] = [NetshTraceObject.StatusCode]::Failed
             $allPassed = $false
@@ -362,14 +363,14 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StartTrace" -Value {
     $this.TraceFile = "{0}\{1}_{2}.etl" -f $this.SaveDirectory, $this.BaseFileName, ((Get-Date).ToString("yyyyMMddHHmmss"))
     $scriptBlockString = "Netsh trace start capture={0} scenario={1} maxsize={2} persistent={3} tracefile={4} correlation={5} overwrite={6} report={7}" -f $this.Capture,
     $this.Scenario, $this.MaxSize, $this.Persistent, $this.TraceFile, $this.Correlation, $this.Overwrite, $this.Report
-    $this.WriteVerboseWriter("Full netsh command: '{0}'" -f $scriptBlockString)
+    $this.WriteVerboseWriter(("Full netsh command: '{0}'" -f $scriptBlockString))
     $scriptBlock = [ScriptBlock]::Create($scriptBlockString)
 
     $results = $this.StartJobManager($serversWithArguments, $scriptBlock)
     $allPassed = $true 
     foreach($server in $this.ServerList)
     {
-        $this.WriteVerboseWriter("Looking at server {0} to see if it worked to start the trace" -f $server)
+        $this.WriteVerboseWriter(("Looking at server {0} to see if it worked to start the trace" -f $server))
         $data = $results[$server]
         $this.ServerStatusDetails[$server] = $data
         $index = 0
@@ -394,14 +395,14 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StartTrace" -Value {
         }
         if($index -eq -1 -or (-not($data[$index].Contains("Running"))))
         {
-            $this.WriteHostWriter("Server {0} appears to have failed to start the trace" -f $server)
+            $this.WriteHostWriter(("Server {0} appears to have failed to start the trace" -f $server))
             $this.WriteHostWriter($data)
             $this.ServerStatus[$server] = [NetshTraceObject.StatusCode]::Failed
             $allPassed = $false
         }
         else 
         {
-            $this.WriteVerboseWriter("Server {0} appears to have started the trace" -f $server)
+            $this.WriteVerboseWriter(("Server {0} appears to have started the trace" -f $server))
             $this.ServerStatus[$server] = [NetshTraceObject.StatusCode]::Success 
         }
     }
@@ -422,7 +423,7 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "GetFailedServerStatu
     {
         if($this.ServerStatus[$server] -eq [NetshTraceObject.StatusCode]::Failed)
         {
-            $this.WriteVerboseWriter("Serer {0} appears to have failed. Collecting the information" -f $server)
+            $this.WriteVerboseWriter(("Serer {0} appears to have failed. Collecting the information" -f $server))
             $data = $this.ServerStatusDetails[$server]
             $stringReturnObject += "Server Failed Data: {0}" -f $server
             $stringReturnObject += $data
@@ -431,7 +432,7 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "GetFailedServerStatu
         }
         else 
         {
-            $this.WriteVerboseWriter("Server {0} appears to not have failed." -f $server)
+            $this.WriteVerboseWriter(("Server {0} appears to not have failed." -f $server))
         }
     }
     return $stringReturnObject
