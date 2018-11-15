@@ -23,7 +23,6 @@ Add-Type -TypeDefinition @"
         }
     }
 "@ 
-#[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
 
 ########################
 #
@@ -81,20 +80,6 @@ Function New-ServersEventDataHashtable {
     }
     return $hasher
 }
-
-########################
-#
-# Template Functions
-#
-########################
-
-
-########################
-#
-# End Template Functions
-#
-########################
-
 
 ########## Parameter Binding Exceptions ##############
 # throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
