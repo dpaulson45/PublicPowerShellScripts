@@ -44,7 +44,7 @@ param(
     {
         Write-Host $WriteString -ForegroundColor Cyan
     }
-    else 
+    elseif($this.WriteVerboseData)
     {
         $this.VerboseFunctionCaller($WriteString)
     }
@@ -307,7 +307,11 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StopTrace" -Value {
         $this.ServerStatusDetails[$server] = $data
         $serverSuccess = $false 
         $index = 0 
-        if($data[3].Trim() -eq "Tracing session was successfully stopped.")
+        if($data[0].Trim() -eq "There is no trace session currently in progress.")
+        {
+            $serverSuccess = $true 
+        }
+        elseif($data[3].Trim() -eq "Tracing session was successfully stopped.")
         {
             $serverSuccess = $true 
         }
