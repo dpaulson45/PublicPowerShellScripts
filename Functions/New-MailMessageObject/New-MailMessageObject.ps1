@@ -11,7 +11,19 @@ param(
 [Parameter(Mandatory=$false)][string]$CustomTestMessageSubject = "Script Mail Message Object Test",
 [Parameter(Mandatory=$false)][string]$CustomTestMessageBody = "Test Worked!"
 )
-#Function Version 1.1
+#Function Version 1.2
+Add-Type -TypeDefinition @"
+    namespace MailMessage
+    {
+        public enum StatusCode 
+        {
+            None,
+            Success,
+            Failed
+        }
+    }
+"@
+
 if([string]::IsNullOrWhiteSpace($CustomTestMessageSubject))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid CustomTestMessageSubject"
@@ -64,18 +76,40 @@ $mailObject | Add-Member -MemberType NoteProperty -Name "Success" -Value $true
 
 $mailObject | Add-Member -MemberType ScriptMethod -Name "SendMail" -Value {
 
+    $success = $true 
     $params = $this.Parameters 
     try 
     {
-        Send-MailMessage @params 
+        Send-MailMessage @params -ErrorAction Stop 
     }
     catch 
     {
-        $this.Success = $false 
+        $Success = $false 
         $this.Exception = $Error[0].Exception
     }
+    if($success)
+    {
+        return [MailMessage.StatusCode]::Success
+    }
+    else 
+    {
+        return [MailMessage.StatusCode]::Failed
+    }
+}
+
+$mailObject | Add-Member -MemberType ScriptMethod -Name "UpdateMessageBodyTypeArray" -Value {
+    param(
+    [array]$BodyArray 
+    )
     
-} 
+    $bodyString = [string]::Empty
+    foreach($line in $BodyArray)
+    {
+        $bodyString += $line
+        $bodyString += "`n"
+    }
+    $this.UpdateMessageBody($bodyString)
+}
 
 $mailObject | Add-Member -MemberType ScriptMethod -Name "UpdateMessageBody" -Value {
     param(
@@ -118,10 +152,6 @@ $mailObject | Add-Member -MemberType ScriptMethod -Name "UpdateMessageSubject" -
     }
     $params = $this.Parameters 
     $params["Subject"] = $MessageSubject
-}
-
-$mailObject | Add-Member -MemberType ScriptMethod -Name "GetMessageSuccess" -Value {
-    return $this.Success 
 }
 
 $mailObject | Add-Member -MemberType ScriptMethod -Name "GetExceptionReason" -Value {
