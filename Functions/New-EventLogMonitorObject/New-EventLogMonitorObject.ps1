@@ -11,7 +11,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Add-Type -TypeDefinition @"
     namespace EventLogMonitor
     {
@@ -164,13 +164,26 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
         }
     }
 
+    Function Get-StringArrayFromObjectDetails{
+    param(
+    [array]$Properties,
+    [object]$EventData
+    )
+        $data = @()
+        foreach($property in $Properties)
+        {
+            $data += "{0}: `t{1}" -f $property, ($EventData | Select-Object $property).$property
+        }
+        return $data
+    }
+
     $stringData = @("--Event Results--")
     foreach($server in $conditionServer)
     {
         $data = $this.ServerEventData[$server]
         $stringData += ("Server {0} Event Data" -f $server)
         $stringData += ""
-        $stringData += $data | Select-Object MachineName,ID,ProviderName,TaskDisplayName, LogName, TimeCreated, Message
+        $stringData += Get-StringArrayFromObjectDetails -Properties @("MachineName","ID","ProviderName","TaskDisplayName", "LogName", "TimeCreated", "Message") -EventData $data
         $stringData += "--End Server Event Data--"
     }
     
