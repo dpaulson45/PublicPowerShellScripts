@@ -374,7 +374,12 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StartTrace" -Value {
         $data = $results[$server]
         $this.ServerStatusDetails[$server] = $data
         $index = 0
-        if($data[3].StartsWith("Status"))
+        if($data.count -lt 3)
+        {
+            #We either failed or have a netsh trace start need to fail them both out
+            $index = -1
+        }
+        elseif($data[3].StartsWith("Status"))
         {
             $index = 3
         }
