@@ -314,7 +314,7 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -V
             $this.ServersStatus[$server].LogmanStatusCode = [ExtraLogman.StatusCode]::None
         }
     }
-    #For now, this should always return succcess 
+    #For now, this should always return success 
     return ([ExtraLogman.StatusCode]::Success)
 }
 
