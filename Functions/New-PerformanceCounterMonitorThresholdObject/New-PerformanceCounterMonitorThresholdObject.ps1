@@ -20,7 +20,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.2
+#Function Version 1.3
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -118,6 +118,15 @@ Function Get-Counters {
     return $counterList
 }
 
+Function Get-ThresholdMetObjectDetails {
+    $obj = New-Object pscustomobject 
+    $obj | Add-Member -MemberType NoteProperty -Name "Counter" -Value ([string]::Empty)
+    $obj | Add-Member -MemberType NoteProperty -Name "MetValue" -Value ([double]0)
+    $obj | Add-Member -MemberType NoteProperty -Name "Details" -Value ([string]::Empty)
+    $obj | Add-Member -MemberType NoteProperty -Name "Type" -Value ([string]::Empty)
+    return $obj
+}
+
 $perfMonitorObject = New-Object pscustomobject 
 
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "PerformanceCounters" -Value $Perfcounters
@@ -128,6 +137,7 @@ $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "Counters" -Value
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" -Value ([DateTime]::Now)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetDetails" -Value ([string]::Empty)
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetObjectDetails" -Value (Get-ThresholdMetObjectDetails)
 $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
 $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
 
@@ -230,17 +240,24 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
         $counterName = $counterResults.Name 
         $counterPassedObj = $this.PerformanceCounters[$counterName]
         $minMaxAvgResults = $this.GetPerformanceCounterMinMaxAverageCorrectly($counterResults.Group)
-        $Global:MinMaxAvgResults = $minMaxAvgResults
+        
+        $thresholdType = ([string]::Empty)
+        $thresholdValue = 0
+
         if($counterPassedObj.ThresholdType -eq "GreaterThan")
         {
             if($minMaxAvgResults.Max -ge $counterPassedObj.MaxSpikeThreshold)
             {
                 $details = "Met max spike threshold. Current max spike is '{0}' which is above the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Max, $counterPassedObj.MaxSpikeThreshold, $counterName
+                $thresholdType = "GreaterThanMax"
+                $thresholdValue = $minMaxAvgResults.Max
                 $thresholdMet = $true 
             }
             if($minMaxAvgResults.Avg -ge $counterPassedObj.AverageThreshold)
             {
                 $details = "Met average threshold. Current average is '{0}' which is above the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Avg, $counterPassedObj.AverageThreshold, $counterName
+                $thresholdType = "GreaterThanAvg"
+                $thresholdValue = $minMaxAvgResults.Avg 
                 $thresholdMet = $true 
             }
         }
@@ -249,17 +266,25 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
             if($minMaxAvgResults.Min -le $counterPassedObj.MinDipThreshold)
             {
                 $details = "Met min dip threshold. Current min dip is '{0}' which is below the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Min, $counterPassedObj.MinDipThreshold, $counterName
+                $thresholdType = "LessThanMin"
+                $thresholdValue = $minMaxAvgResults.Min
                 $thresholdMet = $true 
             }
             if($minMaxAvgResults.Avg -le $counterPassedObj.AverageThreshold)
             {
                 $details = "Met average threshold. Current average is '{0}' which is below the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Avg, $counterPassedObj.AverageThreshold, $counterName
+                $thresholdType = "LessThanAvg"
+                $thresholdValue = $minMaxAvgResults.Avg
                 $thresholdMet = $true 
             }   
         }
         if($thresholdMet)
         {
             $this.ThresholdMetDetails = $details
+            $this.ThresholdMetObjectDetails.Counter = $counterName
+            $this.ThresholdMetObjectDetails.MetValue = $thresholdValue
+            $this.ThresholdMetObjectDetails.Details = $details 
+            $this.ThresholdMetObjectDetails.Type = $thresholdType
             $this.WriteHostWriter($details)
             return [PerfCounterMonitor.StatusCode]::ThresholdMet
         }
