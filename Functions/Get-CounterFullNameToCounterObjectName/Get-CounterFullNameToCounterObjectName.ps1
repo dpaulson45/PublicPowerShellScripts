@@ -1,10 +1,10 @@
-Function Get-CounterSampleToCounterObjectName {
+Function Get-CounterFullNameToCounterObjectName {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$true)][string]$FullCounterName
 )
     
-#Function Version 1.0
+#Function Version 1.1
 $counterObject = New-Object -TypeName pscustomobject 
 
 #\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\avg. disk sec/read
@@ -12,20 +12,16 @@ $endOfServerIndex = $FullCounterName.IndexOf("\",2) #\\adt-e2k13aio1 <> \logical
 $startOfCounterIndex = $FullCounterName.LastIndexOf("\") + 1 #\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\ <> avg. disk sec/read
 $endOfCounterObjectIndex = $FullCounterName.IndexOf("(") 
 if($endOfCounterObjectIndex -eq -1){$endOfCounterObjectIndex = $startOfCounterIndex - 1}
-if(($FullCounterName.Contains("(")) -and ($FullCounterName.Contains("#")))
+if(($FullCounterName.Contains("(")))
 {
     $instanceName = ($FullCounterName.Substring($endOfCounterObjectIndex + 1, ($FullCounterName.IndexOf(")") - $endOfCounterObjectIndex - 1)))
 }
-else 
-{
-    $instanceName = ($PerformanceCounterSample.InstanceName)
-}
-$counterObj | Add-Member -MemberType NoteProperty -Name "FullName" -Value $FullCounterName
-$counterObj | Add-Member -MemberType NoteProperty -Name "ServerName" -Value ($FullCounterName.Substring(2,($endOfServerIndex - 2)))
-$counterObj | Add-Member -MemberType NoteProperty -Name "ObjectName" -Value ($FullCounterName.Substring($endOfServerIndex + 1, $endOfCounterObjectIndex - $endOfServerIndex - 1))
-$counterObj | Add-Member -MemberType NoteProperty -Name "InstanceName" -Value $instanceName
-$counterObj | Add-Member -MemberType NoteProperty -Name "CounterName" -Value ($FullCounterName.Substring($startOfCounterIndex))
+$counterObject | Add-Member -MemberType NoteProperty -Name "FullName" -Value $FullCounterName
+$counterObject | Add-Member -MemberType NoteProperty -Name "ServerName" -Value ($FullCounterName.Substring(2,($endOfServerIndex - 2)))
+$counterObject | Add-Member -MemberType NoteProperty -Name "ObjectName" -Value ($FullCounterName.Substring($endOfServerIndex + 1, $endOfCounterObjectIndex - $endOfServerIndex - 1))
+$counterObject | Add-Member -MemberType NoteProperty -Name "InstanceName" -Value $instanceName
+$counterObject | Add-Member -MemberType NoteProperty -Name "CounterName" -Value ($FullCounterName.Substring($startOfCounterIndex))
 
-return $counterObj
+return $counterObject
 
 }
