@@ -1,0 +1,2 @@
+# Dump-StoreWorkerOnPerformanceCounter
+Script that is used to monitor a server's active databases based of a performance counter and monitor a threshold that you provide. After the threshold is met, we dump the store worker process that had the threshold met. 
