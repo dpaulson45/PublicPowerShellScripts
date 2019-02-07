@@ -5,7 +5,7 @@ param(
 [int]$StartingNumber = 1,
 [Parameter(Mandatory=$true)][string]$Password, 
 [Parameter(Mandatory=$false)][string]$DomainName = (Get-ADDomain -Current LocalComputer).DNSRoot,
-[Parameter(Mandatory=$true)][Array]$MailboxDatabases,
+[Parameter(Mandatory=$false)][Array]$MailboxDatabases,
 [Parameter(Mandatory=$false)][string]$OrganizationalUnit
 )
 
@@ -29,16 +29,23 @@ Function Main
         $UserName = "{0}{1}" -f $BaseName, $StartingNumber.ToString().PadLeft($Padding,"0")
         $StartingNumber++
         $upn = $UserName + "@" + $DomainName
-        $db = Get-RandomDatabase
+        $db = $null
+        if($MailboxDatabases.Count -gt 0)
+        {
+            $db = Get-RandomDatabase
+        }
         $params = @{
         Name = $UserName
         UserPrincipalName = $upn
         SamAccountName = $UserName
         Password = $securepassword 
         ResetPasswordOnNextLogon = $false 
-        Database = $db
         }
-        if($OrganizationalUnit -ne $null -or $OrganizationalUnit -ne [string]::Empty)
+        if($db -ne $null)
+        {
+            $params.Add("Database", $db)
+        }
+        if($OrganizationalUnit -ne $null -and $OrganizationalUnit -ne [string]::Empty)
         {
             $params.Add("OrganizationalUnit", $OrganizationalUnit)
         }
