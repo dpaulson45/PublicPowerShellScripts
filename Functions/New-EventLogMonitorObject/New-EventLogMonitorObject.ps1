@@ -11,7 +11,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Add-Type -TypeDefinition @"
     namespace EventLogMonitor
     {
@@ -154,7 +154,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "ResetStatus"
     $this.NextUpdateTime = [DateTime]::Now
 }
 
-$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData" -Value {
+$eventLogMonitorObject | Add-Member -MemberType  ScriptMethod -Name "GetConditionServers" -Value {
     $conditionServer = @() ##Needs to be array in case they don't reset the data 
     foreach($server in $this.ServerList)
     {
@@ -163,6 +163,12 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
             $conditionServer += $server
         }
     }
+    return $conditionServer 
+}
+
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData" -Value {
+    
+    $conditionServer = $this.GetConditionServers() 
 
     Function Get-StringArrayFromObjectDetails{
     param(
@@ -188,6 +194,16 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
     }
     
     return $stringData 
+}
+
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetRawEventData" -Value {
+    $conditionServer = $this.GetConditionServers() 
+    $events = @() 
+    foreach($server in $conditionServer)
+    {
+        $events += $this.ServerEventData[$server]
+    }
+    return $events
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServers" -Value {
