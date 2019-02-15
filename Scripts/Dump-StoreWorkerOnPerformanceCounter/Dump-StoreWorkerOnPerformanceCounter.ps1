@@ -10,7 +10,7 @@ param(
 [Parameter(Mandatory=$false)][bool]$ScriptDebug = $true
 )
 
-$scriptVersion = 0.1
+$scriptVersion = 0.2
 
 $display = @"
 
@@ -415,6 +415,7 @@ Function Get-PerformanceCountersMonitorThresholdObject {
 Function Set-StoreWorkerPIDCache {
 
     $Script:PIDCache = @{}
+    Write-Host("[{0}]: Updating the StoreWorker PID Cache" -f [System.DateTime]::Now)
     foreach($db in $ActiveDatabaseNames)
     {
         $counter = "\MSExchangeIS store({0})\Process ID" -f $db 
@@ -423,6 +424,7 @@ Function Set-StoreWorkerPIDCache {
     }
 
     $Script:UpdatePIDCache = ([datetime]::Now).AddSeconds($PIDRefreshInterval)
+    Write-Host("[{0}]: Finished updating the cache, next update time: {1}" -f [System.DateTime]::Now, $Script:UpdatePIDCache)
 }
 
 Function Main {
@@ -450,16 +452,17 @@ Function Main {
         }while($monitorStatus -eq [PerfCounterMonitor.StatusCode]::Passed)
 
         $thresholdMetCounter = $perfMonitor.ThresholdMetObjectDetails.Counter
-        Write-Host("threshold met counter: {0}" -f $thresholdMetCounter)
+        Write-Host("[{0}]: threshold met counter: {1}" -f [System.DateTime]::Now, $thresholdMetCounter)
         $counterObject = Get-CounterFullNameToCounterObjectName -FullCounterName $thresholdMetCounter
         $instance = $counterObject.InstanceName
-        Write-Host("Instance name: {0}" -f $instance)
+        Write-Host("[{0}]: Instance name: {1}" -f [System.DateTime]::Now, $instance)
         $workerPid = $Script:PIDCache[$instance]
-        Write-Host("PID: {0}" -f $workerPid)
+        Write-Host("[{0}]: PID: {1}" -f [System.DateTime]::Now, $workerPid)
         & $ProcdumpBinary $dpType $workerPid $DumpFolder -accepteula 
+        Write-Host("[{0}]: Finished dumpping the process" -f [System.DateTime]::Now)
         $issueCount++
-        sleep 10
         Set-StoreWorkerPIDCache
+        sleep 2
     }
 }
 ####### Check for Parameter Issues ##########
