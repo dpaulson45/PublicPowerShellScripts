@@ -12,7 +12,7 @@ param(
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
-#Function Version 1.1
+#Function Version 1.2
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -247,7 +247,7 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CreateLogman" -Value 
     foreach($server in $servers)
     {
         $fullFileName = "{0}\{1}_{2}.etl" -f $path, $fileName, $server
-        [array]$results = logman create trace $logman -max $maxSize -v $appendVersion -o $fullFileName -p $provider -s $server
+        [array]$results = logman create trace $logman -max $maxSize -v $appendVersion -o $fullFileName -p $provider -s $server -bs 128 -f bincirc -mode globalsequence
         $this.ServersStatus[$server].CreatedResults = $results
         if($results[-1].Trim() -eq "The command completed successfully.")
         {
