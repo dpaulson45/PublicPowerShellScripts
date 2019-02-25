@@ -3,6 +3,7 @@ Function New-NetshTraceObject {
 param(
 [Parameter(Mandatory=$true)][array]$ServerList,
 [Parameter(Mandatory=$false)][string]$Scenario = "netconnection",
+[Parameter(Mandatory=$false)][string]$CustomProviderString, #Custom provider string needs to be done like this, otherwise PowerShell fails to find the provider: provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7
 [Parameter(Mandatory=$false)][string]$Persistent = "Yes",
 [Parameter(Mandatory=$false)][string]$BaseFileName = "NetworkCapture",
 [Parameter(Mandatory=$false)][string]$SaveDirectory = "C:\",
@@ -17,7 +18,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Add-Type -TypeDefinition @"
     namespace NetshTraceObject
     {
@@ -88,7 +89,12 @@ Function New-ServerStatusDetailsHashtables {
 
 ########## Parameter Binding Exceptions ##############
 # throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
-if([string]::IsNullOrEmpty($Scenario))
+$usingCustomProviderString = $false 
+if(!([string]::IsNullOrEmpty($CustomProviderString)))
+{
+    $usingCustomProviderString = $true
+}
+if([string]::IsNullOrEmpty($Scenario) -and (!($usingCustomProviderString)))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Scenario"
 }
@@ -133,6 +139,8 @@ $netshTraceObj = New-Object pscustomobject
 
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "ServerList" -Value $ServerList
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "Scenario" -Value $Scenario
+$netshTraceObj | Add-Member -MemberType NoteProperty -Name "CustomProviderString" -Value $CustomProviderString
+$netshTraceObj | Add-Member -MemberType NoteProperty -Name "UsingCustomProvider" -Value $usingCustomProviderString 
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "Persistent" -Value $Persistent
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "BaseFileName" -Value $BaseFileName
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "SaveDirectory" -Value $SaveDirectory
@@ -361,8 +369,16 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StartTrace" -Value {
     }
 
     $this.TraceFile = "{0}\{1}_{2}.etl" -f $this.SaveDirectory, $this.BaseFileName, ((Get-Date).ToString("yyyyMMddHHmmss"))
-    $scriptBlockString = "Netsh trace start capture={0} scenario={1} maxsize={2} persistent={3} tracefile={4} correlation={5} overwrite={6} report={7}" -f $this.Capture,
-    $this.Scenario, $this.MaxSize, $this.Persistent, $this.TraceFile, $this.Correlation, $this.Overwrite, $this.Report
+    $scriptBlockString = "Netsh trace start capture={0} maxsize={1} persistent={2} tracefile={3} correlation={4} overwrite={5} report={6}" -f $this.Capture,
+    $this.MaxSize, $this.Persistent, $this.TraceFile, $this.Correlation, $this.Overwrite, $this.Report
+    if($this.UsingCustomProvider)
+    {
+        $scriptBlockString = "{0} {1}" -f $scriptBlockString, $this.CustomProviderString
+    }
+    else 
+    {
+        $scriptBlockString = "{0} scenario={1}" -f $scriptBlockString, $this.Scenario
+    }
     $this.WriteVerboseWriter(("Full netsh command: '{0}'" -f $scriptBlockString))
     $scriptBlock = [ScriptBlock]::Create($scriptBlockString)
 
