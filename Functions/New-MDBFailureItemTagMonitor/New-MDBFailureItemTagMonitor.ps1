@@ -1,14 +1,14 @@
 Function New-MDBFailureItemTagMonitor {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$false)][int]$TagID = 38,
+[Parameter(Mandatory=$false)][array]$TagIDs = @(38,39),
 [Parameter(Mandatory=$false)][array]$MonitorOnlyDBs,
 [Parameter(Mandatory=$false)][bool]$WriteVerboseData, 
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.2
 #[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
 Add-Type -TypeDefinition @"
     namespace MDBFailureItemTag
@@ -349,11 +349,11 @@ return $eventLogMonitorObject
 
 ########## Parameter Binding Exceptions ##############
 # throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
-if($TagID -lt 0)
+if($TagIDs -eq $null -and $TagIDs.Count -gt 0)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid TagID. Needs to be greater than 0." 
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid TagIDs." 
 }
-if($MonitorOnlyDBs -ne $null -and $MonitorOnlyDBs -gt 0)
+if($MonitorOnlyDBs -ne $null -and $MonitorOnlyDBs.Count -gt 0)
 {
     $MonitorOnlyDBsEnable = $true 
 }
@@ -366,7 +366,7 @@ $monitorEvents = New-EventLogMonitorObject -LogName "Microsoft-Exchange-MailboxD
 $monitorEvents.UpdateStartTime();
 
 $failureItemTagMonitor = New-Object pscustomobject
-$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "TagID" -Value $TagID 
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "TagIDs" -Value $TagIDs
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorEventObject" -Value $monitorEvents 
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBsEnable" -Value $MonitorOnlyDBsEnable 
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBs" -Value $MonitorOnlyDBs
@@ -395,7 +395,7 @@ $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorEvent
             $doc = [xml]$eventData.ToXml()
             $tag = $doc.Event.UserData.EventXML.Tag 
             $dbGUID = $doc.Event.UserData.EventXML.DatabaseGuid.Trim(@('{', '}')).ToUpper()
-            if($tag -ne $this.TagID) 
+            if($this.TagIDs.Contains($tag)) 
             {
                 $this.WriteVerboseWriter("Ignoring failure item with tag: {0}" -f $tag)
                 continue 
