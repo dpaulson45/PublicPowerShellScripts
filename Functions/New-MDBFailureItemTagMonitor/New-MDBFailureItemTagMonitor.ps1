@@ -3,12 +3,13 @@ Function New-MDBFailureItemTagMonitor {
 param(
 [Parameter(Mandatory=$false)][array]$TagIDs = @(38,39),
 [Parameter(Mandatory=$false)][array]$MonitorOnlyDBs,
-[Parameter(Mandatory=$false)][bool]$WriteVerboseData, 
+[Parameter(Mandatory=$false)][bool]$WriteVerboseData,
+[Parameter(Mandatory=$false)][object]$LoggerObject,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.2
+#Function Version 1.3
 #[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
 Add-Type -TypeDefinition @"
     namespace MDBFailureItemTag
@@ -32,7 +33,11 @@ Function Write-VerboseWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
 )
-    if($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteVerbose($WriteString)
+    }
+    elseif($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
     {
         Write-Host $WriteString -ForegroundColor Cyan
     }
@@ -46,7 +51,11 @@ Function Write-HostWriter {
 param(
 [Parameter(Mandatory=$true)][string]$WriteString 
 )
-    if($this.HostFunctionCaller -eq $null)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteHost($WriteString)
+    }
+    elseif($this.HostFunctionCaller -eq $null)
     {
         Write-Host $WriteString
     }
@@ -372,6 +381,7 @@ $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyD
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBs" -Value $MonitorOnlyDBs
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "ConditionMetDB" -Value ([string]::Empty)
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $WriteVerboseData
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
 $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
 $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
 

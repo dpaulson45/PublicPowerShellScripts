@@ -6,6 +6,7 @@ param(
 [Parameter(Mandatory=$false)][int]$MaxSamples = 10,
 [Parameter(Mandatory=$false)][int]$SleepTime = 0,
 [Parameter(Mandatory=$false)][int]$UpdateEveryXMinutes = 5,
+[Parameter(Mandatory=$false)][object]$LoggerObject,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
@@ -20,7 +21,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.3
+#Function Version 1.4
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -67,7 +68,11 @@ Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
     )
-        if($this.VerboseFunctionCaller -eq $null)
+        if($this.LoggerObject -ne $null)
+        {
+            $this.LoggerObject.WriteVerbose($WriteString)
+        }
+        elseif($this.VerboseFunctionCaller -eq $null)
         {
             Write-Verbose $WriteString
         }
@@ -81,7 +86,11 @@ Function Write-VerboseWriter {
     param(
     [Parameter(Mandatory=$true)][string]$WriteString 
     )
-        if($this.HostFunctionCaller -eq $null)
+        if($this.LoggerObject -ne $null)
+        {
+            $this.LoggerObject.WriteHost($WriteString)
+        }
+        elseif($this.HostFunctionCaller -eq $null)
         {
             Write-Host $WriteString
         }
@@ -138,6 +147,7 @@ $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" 
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetDetails" -Value ([string]::Empty)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetObjectDetails" -Value (Get-ThresholdMetObjectDetails)
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
 $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
 $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
 
