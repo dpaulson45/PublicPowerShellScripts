@@ -9,7 +9,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.3
+#Function Version 1.4
 #[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
 Add-Type -TypeDefinition @"
     namespace MDBFailureItemTag
@@ -426,6 +426,21 @@ $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorEvent
 $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "ResetStatus" -Value {
     $this.MonitorEventObject.ResetStatus()
     $this.ConditionMetDB = [string]::Empty
+}
+
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorLoop" -Value {
+    
+    while($true)
+    {
+        if($this.MonitorEvents -eq [MDBFailureItemTag.StatusCode]::ConditionMet)
+        {
+            return [MDBFailureItemTag.StatusCode]::ConditionMet
+        }
+        else 
+        {
+            Sleep 5
+        }
+    }
 }
 
 
