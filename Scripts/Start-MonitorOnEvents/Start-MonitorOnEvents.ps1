@@ -24,7 +24,7 @@ param(
 [Parameter(Mandatory=$false)][switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.2
+$scriptVersion = 0.3
 
 $display = @"
 
@@ -92,7 +92,7 @@ Function New-ExtraLogmanObject {
 param(
 [Parameter(Mandatory=$false)][string]$LogmanName = "ExchangeLogman",
 [Parameter(Mandatory=$false)][string]$SaveName,
-[Parameter(Mandatory=$false)][int]$EtlFileSize = 800,
+[Parameter(Mandatory=$false)][int]$EtlFileSize = 400,
 #[Parameter(Mandatory=$false)][string]$EtlCNF, # = "00:30:00", #TODO see if this is truly needed
 [Parameter(Mandatory=$false)][string]$SavePath = "C:\Traces",
 [Parameter(Mandatory=$false)][string]$Provider = "Microsoft Exchange Server 2010",
@@ -101,7 +101,7 @@ param(
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
-#Function Version 1.1
+#Function Version 1.2
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -336,7 +336,7 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CreateLogman" -Value 
     foreach($server in $servers)
     {
         $fullFileName = "{0}\{1}_{2}.etl" -f $path, $fileName, $server
-        [array]$results = logman create trace $logman -max $maxSize -v $appendVersion -o $fullFileName -p $provider -s $server
+        [array]$results = logman create trace $logman -max $maxSize -v $appendVersion -o $fullFileName -p $provider -s $server -bs 128 -f bincirc -mode globalsequence
         $this.ServersStatus[$server].CreatedResults = $results
         if($results[-1].Trim() -eq "The command completed successfully.")
         {
@@ -403,7 +403,7 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -V
             $this.ServersStatus[$server].LogmanStatusCode = [ExtraLogman.StatusCode]::None
         }
     }
-    #For now, this should always return succcess 
+    #For now, this should always return success 
     return ([ExtraLogman.StatusCode]::Success)
 }
 
@@ -696,6 +696,7 @@ Function New-NetshTraceObject {
 param(
 [Parameter(Mandatory=$true)][array]$ServerList,
 [Parameter(Mandatory=$false)][string]$Scenario = "netconnection",
+[Parameter(Mandatory=$false)][string]$CustomProviderString, #Custom provider string needs to be done like this, otherwise PowerShell fails to find the provider: provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7
 [Parameter(Mandatory=$false)][string]$Persistent = "Yes",
 [Parameter(Mandatory=$false)][string]$BaseFileName = "NetworkCapture",
 [Parameter(Mandatory=$false)][string]$SaveDirectory = "C:\",
@@ -710,7 +711,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
+#Function Version 1.1
 Add-Type -TypeDefinition @"
     namespace NetshTraceObject
     {
@@ -781,7 +782,12 @@ Function New-ServerStatusDetailsHashtables {
 
 ########## Parameter Binding Exceptions ##############
 # throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
-if([string]::IsNullOrEmpty($Scenario))
+$usingCustomProviderString = $false 
+if(!([string]::IsNullOrEmpty($CustomProviderString)))
+{
+    $usingCustomProviderString = $true
+}
+if([string]::IsNullOrEmpty($Scenario) -and (!($usingCustomProviderString)))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Scenario"
 }
@@ -826,6 +832,8 @@ $netshTraceObj = New-Object pscustomobject
 
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "ServerList" -Value $ServerList
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "Scenario" -Value $Scenario
+$netshTraceObj | Add-Member -MemberType NoteProperty -Name "CustomProviderString" -Value $CustomProviderString
+$netshTraceObj | Add-Member -MemberType NoteProperty -Name "UsingCustomProvider" -Value $usingCustomProviderString 
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "Persistent" -Value $Persistent
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "BaseFileName" -Value $BaseFileName
 $netshTraceObj | Add-Member -MemberType NoteProperty -Name "SaveDirectory" -Value $SaveDirectory
@@ -1054,8 +1062,16 @@ $netshTraceObj | Add-Member -MemberType ScriptMethod -Name "StartTrace" -Value {
     }
 
     $this.TraceFile = "{0}\{1}_{2}.etl" -f $this.SaveDirectory, $this.BaseFileName, ((Get-Date).ToString("yyyyMMddHHmmss"))
-    $scriptBlockString = "Netsh trace start capture={0} scenario={1} maxsize={2} persistent={3} tracefile={4} correlation={5} overwrite={6} report={7}" -f $this.Capture,
-    $this.Scenario, $this.MaxSize, $this.Persistent, $this.TraceFile, $this.Correlation, $this.Overwrite, $this.Report
+    $scriptBlockString = "Netsh trace start capture={0} maxsize={1} persistent={2} tracefile={3} correlation={4} overwrite={5} report={6}" -f $this.Capture,
+    $this.MaxSize, $this.Persistent, $this.TraceFile, $this.Correlation, $this.Overwrite, $this.Report
+    if($this.UsingCustomProvider)
+    {
+        $scriptBlockString = "{0} {1}" -f $scriptBlockString, $this.CustomProviderString
+    }
+    else 
+    {
+        $scriptBlockString = "{0} scenario={1}" -f $scriptBlockString, $this.Scenario
+    }
     $this.WriteVerboseWriter(("Full netsh command: '{0}'" -f $scriptBlockString))
     $scriptBlock = [ScriptBlock]::Create($scriptBlockString)
 
@@ -1362,7 +1378,7 @@ Function Main {
         $params.Add("Credentials",$MailCreds)
     }
     $mailObject = New-MailMessageObject @params
-    $netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath 
+    $netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath -CustomProviderString "provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7 provider='{E53C6823-7BB8-44BB-90DC-3F86090D48A6}' keywords=0x8000000000ffffff level=0x7 provider='{2F07E2EE-15DB-40F1-90EF-9D7BA282188A}' keywords=0x80007fff000fffff level=0x7"
     $extraObject = New-ExtraLogmanObject -SavePath $SaveAllDataPath -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent -ServerList $Servers
     $eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers 
 
