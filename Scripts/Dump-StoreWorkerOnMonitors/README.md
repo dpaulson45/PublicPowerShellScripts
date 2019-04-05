@@ -1,0 +1,2 @@
+# Dump-StoreWorkerOnMonitors
+Script that is used to monitor a server's active databases based of a few different monitor types. After the monitor condition is met, we dump the store worker process that had the condition met. 
