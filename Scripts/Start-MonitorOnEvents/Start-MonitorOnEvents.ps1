@@ -11,20 +11,28 @@ Author: David Paulson
 #>
 [CmdletBinding()]
 param(
+[Parameter(Mandatory=$false)][bool]$EnableEmailNotification = $false,
 [Parameter(Mandatory=$false)][string]$SMTPSender,
 [Parameter(Mandatory=$false)][array]$SMTPRecipients,
 [Parameter(Mandatory=$false)][string]$SMTPServerNameOrIPAddress = $ENV:COMPUTERNAME,
 [Parameter(Mandatory=$false)][PSCredential]$MailCreds,
 [Parameter(Mandatory=$false)][array]$Servers = @($ENV:COMPUTERNAME),
+[Parameter(Mandatory=$false)][bool]$MDBFailureItemTagMonitorEnabled = $true,
+[Parameter(Mandatory=$false)][array]$MDBFailureItemTags = @(38,39),
+[Parameter(Mandatory=$false)][array]$ActiveDatabaseGUIDs,
 [Parameter(Mandatory=$false)][string]$EventLogName = "Microsoft-Exchange-HighAvailability/BlockReplication",
 [Parameter(Mandatory=$false)][int]$EventID = 2024,
+[Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $true,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent,
-[Parameter(Mandatory=$false)][int]$IssueLimit = 5,
+[Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $true,
+[Parameter(Mandatory=$false)][int]$ExperfwizInterval = 1,
+[Parameter(Mandatory=$false)][bool]$EnableNetshTrace = $false,
+[Parameter(Mandatory=$false)][int]$IssueLimit = 1,
 [Parameter(Mandatory=$false)][string]$SaveAllDataPath = ((Get-Location).Path),
 [Parameter(Mandatory=$false)][switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.3
+$scriptVersion = 0.5
 
 $display = @"
 
@@ -40,8 +48,10 @@ $display = @"
 
 
 $ExtraTraceConfigFileContent = @("TraceLevels:Debug,Warning,Error,Fatal,Info,Performance,Function,Pfd",
-"Cluster.Replay:ReplayApi,EseutilWrapper,State,LogReplayer,ReplicaInstance,Cmdlets,ShipLog,LogCopy,LogInspector,ReplayManager,CReplicaSeeder,NetShare,ReplicaVssWriterInterop,StateLock,FileChecker,Cluster,SeederWrapper,PFD,IncrementalReseeder,Dumpster,CLogShipContext,ClusDBWrite,ReplayConfiguration,NetPath,HealthChecks,ReplayServiceRpc,ActiveManager,SeederServer,SeederClient,LogTruncater,FailureItem,LogCopyServer,LogCopyClient,TcpChannel,TcpClient,TcpServer,RemoteDataProvider,MonitoredDatabase,NetworkManager,NetworkChannel,FaultInjection,GranularWriter,GranularReader,ThirdPartyClient,ThirdPartyManager,ThirdPartyService,ClusterEvents,AmNetworkMonitor,AmConfigManager,AmSystemManager,AmServiceMonitor,ServiceOperations,AmServerNameCache,KernelWatchdogTimer,FailureItemHealthMonitor,ReplayServiceDiagnostics,LogRepair,PassiveBlockMode,LogCopier,DiskHeartbeat,Monitoring,ServerLocatorService,ServerLocatorServiceClient,LatencyChecker,VolumeManager,AutoReseed,DiskReclaimer,ADCache,DbTracker,DatabaseCopyLayout,CompositeKey,ClusdbKey,DxStoreKey,DualStoreConfig,PreferenceMove,PamRebalance,NetworkThrottlingConfigUpdater,VolumeForceSuspender",
-"NetworkingLayer:DNS,Network,Authentication,Certificate,DirectoryServices,ProcessManager,HttpClient,ProtocolLog,RightsManagement,LiveIDAuthenticationClient,DeltaSyncClient,DeltaSyncResponseHandler,LanguagePackInfo,WSTrust,EwsClient,Configuration,SmtpClient,XropServiceClient,XropServiceServer,Claim,Facebook,LinkedIn,MonitoringWebClient,RulesBasedHttpModule,AADClient,AppSettings,Common",
+"ManagedStore.MapiDisp:RpcBuffer,RpcOperation,RpcDetail,RpcContextPool",
+"ManagedStore.MapiRpc:General,RpcOperation,FaultInjection",
+"MapiNet:tagCxhPool,tagLocation",
+"ManagedStore.RpcProxy:ProxyAdmin",
 "FilteredTracing:No",
 "InMemoryTracing:No")
 
@@ -85,6 +95,353 @@ param(
 # Template Functions
 #
 ########################
+
+# Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-MDBFailureItemTagMonitor/New-MDBFailureItemTagMonitor.ps1
+Function New-MDBFailureItemTagMonitor {
+[CmdletBinding()]
+param(
+[Parameter(Mandatory=$false)][array]$TagIDs = @(38,39),
+[Parameter(Mandatory=$false)][array]$MonitorOnlyDBs,
+[Parameter(Mandatory=$false)][bool]$WriteVerboseData,
+[Parameter(Mandatory=$false)][object]$LoggerObject,
+[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
+[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
+)
+
+#Function Version 1.4
+#[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
+Add-Type -TypeDefinition @"
+    namespace MDBFailureItemTag
+    {
+        public enum StatusCode
+        {
+            None,
+            Passed,
+            ConditionMet
+        }
+    }
+"@ 
+
+########################
+#
+# Write Functions 
+#
+########################
+
+Function Write-VerboseWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteVerbose($WriteString)
+    }
+    elseif($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
+    {
+        Write-Host $WriteString -ForegroundColor Cyan
+    }
+    elseif($this.WriteVerboseData)
+    {
+        $this.VerboseFunctionCaller($WriteString)
+    }
+}
+    
+Function Write-HostWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteHost($WriteString)
+    }
+    elseif($this.HostFunctionCaller -eq $null)
+    {
+        Write-Host $WriteString
+    }
+    else
+    {
+        $this.HostFunctionCaller($WriteString)
+    }
+}
+
+########################
+#
+# New-MDBFailureItemTagMonitor -- Template Functions
+#
+########################
+
+# Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-EventLogMonitorObject/New-EventLogMonitorObject.ps1
+#Removed this as we should be able to call New-EventLogMonitorObject from the main part of the script as it isn't nested. This reduces the amount of code in the script. 
+
+########################
+#
+# End New-MDBFailureItemTagMonitor -- Template Functions
+#
+########################
+
+
+########## Parameter Binding Exceptions ##############
+# throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
+if($TagIDs -eq $null -and $TagIDs.Count -gt 0)
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid TagIDs." 
+}
+if($MonitorOnlyDBs -ne $null -and $MonitorOnlyDBs.Count -gt 0)
+{
+    $MonitorOnlyDBsEnable = $true 
+}
+else 
+{
+    $MonitorOnlyDBsEnable = $false 
+}
+
+$monitorEvents = New-EventLogMonitorObject -LogName "Microsoft-Exchange-MailboxDatabaseFailureItems/Operational" -EventID 1 -ServerList @($env:COMPUTERNAME) -HostFunctionCaller $HostFunctionCaller -VerboseFunctionCaller $VerboseFunctionCaller
+$monitorEvents.UpdateStartTime();
+
+$failureItemTagMonitor = New-Object pscustomobject
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "TagIDs" -Value $TagIDs
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorEventObject" -Value $monitorEvents 
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBsEnable" -Value $MonitorOnlyDBsEnable 
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBs" -Value $MonitorOnlyDBs
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "ConditionMetDB" -Value ([string]::Empty)
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $WriteVerboseData
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
+
+if($HostFunctionCaller -ne $null)
+{
+    $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "HostFunctionCaller" -Value $HostFunctionCaller
+}
+if($VerboseFunctionCaller -ne $null)
+{
+    $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "VerboseFunctionCaller" -Value $VerboseFunctionCaller
+}
+
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorEvents" -Value {
+
+    $monitorStatus = $this.MonitorEventObject.MonitorServers()
+    if($monitorStatus -eq [EventLogMonitor.StatusCode]::ConditionMet)
+    {
+        $eventsData = $this.MonitorEventObject.GetRawEventData() 
+        foreach($eventData in $eventsData)
+        {
+            $doc = [xml]$eventData.ToXml()
+            $tag = $doc.Event.UserData.EventXML.Tag 
+            $dbGUID = $doc.Event.UserData.EventXML.DatabaseGuid.Trim(@('{', '}')).ToUpper()
+            if($this.TagIDs.Contains($tag)) 
+            {
+                $this.WriteVerboseWriter("Ignoring failure item with tag: {0}" -f $tag)
+                continue 
+            }
+            if($this.MonitorOnlyDBsEnable -and 
+            (!($this.MonitorOnlyDBs.Contains($dbGUID))))
+            {
+                $this.WriteVerboseWriter("Ignoring failure item for database: {0}" -f $dbGUID)
+                continue 
+            }
+            $this.ConditionMetDB = $dbGUID 
+            return [MDBFailureItemTag.StatusCode]::ConditionMet
+        }
+    }
+    return [MDBFailureItemTag.StatusCode]::Passed
+}
+
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "ResetStatus" -Value {
+    $this.MonitorEventObject.ResetStatus()
+    $this.ConditionMetDB = [string]::Empty
+}
+
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorLoop" -Value {
+    
+    while($true)
+    {
+        if($this.MonitorEvents() -eq [MDBFailureItemTag.StatusCode]::ConditionMet)
+        {
+            return [MDBFailureItemTag.StatusCode]::ConditionMet
+        }
+        else 
+        {
+            Sleep 5
+        }
+    }
+}
+
+
+return $failureItemTagMonitor 
+}
+
+# End Function New-MDBFailureItemTagMonitor
+
+
+# Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-ExperfwizManagerObject/New-ExperfwizManagerObject.ps1
+Function New-ExperfwizManagerObject {
+[CmdletBinding()]
+param(
+[Parameter(Mandatory=$false)][string]$ExperfwizDirectory = '.',
+[Parameter(Mandatory=$false)][string]$ExperfwizName = "Experfwiz.ps1",
+[Parameter(Mandatory=$false)][string]$SaveDirectory = ".",
+[Parameter(Mandatory=$false)][int]$MaxFileSize = 4096,
+[Parameter(Mandatory=$false)][int]$Interval,
+[Parameter(Mandatory=$false)][bool]$EnableCircular = $true,
+[Parameter(Mandatory=$false)][array]$Servers,
+[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
+[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
+)
+
+#Function Version 1.0
+#[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
+
+########################
+#
+# Write Functions 
+#
+########################
+
+Function Write-VerboseWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($this.VerboseFunctionCaller -eq $null)
+    {
+        Write-Verbose $WriteString
+    }
+    else 
+    {
+        $this.VerboseFunctionCaller($WriteString)
+    }
+}
+    
+Function Write-HostWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($this.HostFunctionCaller -eq $null)
+    {
+        Write-Host $WriteString
+    }
+    else
+    {
+        $this.HostFunctionCaller($WriteString)
+    }
+}
+
+########################
+#
+# New-ExperfwizManagerObject -- Template Functions
+#
+########################
+
+
+########################
+#
+# End New-ExperfwizManagerObject -- Template Functions
+#
+########################
+
+
+########## Parameter Binding Exceptions ##############
+# throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
+
+if([string]::IsNullOrWhiteSpace($ExperfwizDirectory) -or (!(Test-Path $ExperfwizDirectory)))
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ExperfwizDirectory" 
+}
+$fullExperfwizPath = "{0}\{1}" -f $ExperfwizDirectory, $ExperfwizName
+if(!(Test-Path $fullExperfwizPath))
+{
+    $throwString = "Failed to provide valid full path to {0} script" -f $ExperfwizName 
+    throw [System.Management.Automation.ParameterBindingException] $throwString
+}
+if($MaxFileSize -lt 1024)
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid MaxFileSize. Must be equal or greater than 1024."
+}
+if($Interval -lt 1 -and $Interval -gt 60)
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Interval. Must be value greater than 0 and less than 60."
+}
+if($Servers -eq $null -or $Servers.Count -eq 0)
+{
+    $Servers = @($env:COMPUTERNAME)
+}
+if($SaveDirectory -eq '.')
+{
+    $SaveDirectory = (Get-Location).Path
+}
+
+$experfwizManager = New-Object pscustomobject 
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "ExperfwizDirectory" -Value $ExperfwizDirectory
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "FullExperfwizPath" -Value $fullExperfwizPath 
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "SaveDirectory" -Value $SaveDirectory
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "MaxFileSize" -Value $MaxFileSize
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "Interval" -Value $Interval
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "EnableCircular" -Value $EnableCircular
+$experfwizManager | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
+$experfwizManager | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
+$experfwizManager | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
+
+
+if($HostFunctionCaller -ne $null)
+{
+    $experfwizManager | Add-Member -MemberType ScriptMethod -Name "HostFunctionCaller" -Value $HostFunctionCaller
+}
+if($VerboseFunctionCaller -ne $null)
+{
+    $experfwizManager | Add-Member -MemberType ScriptMethod -Name "VerboseFunctionCaller" -Value $VerboseFunctionCaller
+}
+
+$experfwizManager | Add-Member -MemberType ScriptMethod -Name "Stop" -Value {
+
+    foreach($server in $this.Servers)
+    {
+        & $this.FullExperfwizPath -stop -server $server 
+    }
+}
+
+$experfwizManager | Add-Member -MemberType ScriptMethod -Name "StartSuccessful" -Value {
+    param(
+    [string]$Server 
+    )
+    $results = logman Exchange_Perfwiz -s $Server 
+
+    foreach($line in $results)
+    {
+        if($line.StartsWith("Status:"))
+        {
+            if($line.Contains("Running"))
+            {
+                return $true 
+            }
+            else 
+            {
+                return $false 
+            }
+        }
+    }
+
+}
+
+$experfwizManager | Add-Member -MemberType ScriptMethod -Name "Start" -Value {
+
+    foreach($server in $this.Servers)
+    {
+        $attempts = 0 
+        $maxAttempts = 10 
+        [int]$maxSize = $this.MaxFileSize 
+        do{
+            & $this.FullExperfwizPath -interval $this.Interval -circular -filepath $this.SaveDirectory -server $server -maxsize $maxSize -quiet
+            $maxSize++
+        }while((!($this.StartSuccessful($server))) -and $attempts -lt $maxAttempts)
+    }
+
+}
+
+return $experfwizManager
+
+}
+# End Function New-ExperfwizManagerObject
+
 
 # Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-ExtraLogmanObject/New-ExtraLogmanObject.ps1
 Function New-ExtraLogmanObject {
@@ -443,7 +800,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 Add-Type -TypeDefinition @"
     namespace EventLogMonitor
     {
@@ -586,7 +943,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "ResetStatus"
     $this.NextUpdateTime = [DateTime]::Now
 }
 
-$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData" -Value {
+$eventLogMonitorObject | Add-Member -MemberType  ScriptMethod -Name "GetConditionServers" -Value {
     $conditionServer = @() ##Needs to be array in case they don't reset the data 
     foreach($server in $this.ServerList)
     {
@@ -595,6 +952,12 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
             $conditionServer += $server
         }
     }
+    return $conditionServer 
+}
+
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData" -Value {
+    
+    $conditionServer = $this.GetConditionServers() 
 
     Function Get-StringArrayFromObjectDetails{
     param(
@@ -620,6 +983,16 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
     }
     
     return $stringData 
+}
+
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetRawEventData" -Value {
+    $conditionServer = $this.GetConditionServers() 
+    $events = @() 
+    foreach($server in $conditionServer)
+    {
+        $events += $this.ServerEventData[$server]
+    }
+    return $events
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServers" -Value {
@@ -1341,6 +1714,11 @@ Function Send-MailObject {
 param(
 [object]$SendMail
 )
+    if(!($EnableEmailNotification))
+    {
+        return 
+    }
+
     $triesAttempts = 5
     $tries = 0 
     while($tries -lt $triesAttempts)
@@ -1359,6 +1737,149 @@ param(
     }
 }
 
+Function Start-DataCollections {
+
+    if($EnableExtraTracing -and $Script:extraObject.StartLogman() -ne [ExtraLogman.StatusCode]::Success)
+    {
+        if($EnableEmailNotification)
+        {
+            $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to start extra trace -- stopping script")
+            Send-MailObject -SendMail $Script:mailMessageObject
+        }
+        exit 
+    }
+    if($EnableNetshTrace -and $Script:netshTraceObject.StartTrace() -ne [NetshTraceObject.StatusCode]::Success) 
+    {
+        $MessageBody = $Script:netshTraceObject.GetFailedServerStatusDetails()
+        $Script:netshTraceObject.StopTrace()
+        if($EnableEmailNotification)
+        {
+            $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to start netsh trace -- stopping script")
+            $Script:mailMessageObject.UpdateMessageBodyTypeArray($MessageBody)
+            Send-MailObject -SendMail $Script:mailMessageObject
+        }
+
+        if($Script:extraObject.StopLogman() -ne [ExtraLogman.StatusCode]::Success)
+        {
+            if($EnableEmailNotification)
+            {
+                $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to stop extra trace.")
+                $Script:mailMessageObject.UpdateMessageBody("Please stop the data collection ASAP to avoid extra from continuing to run on the systems")
+                Send-MailObject -SendMail $Script:mailMessageObject
+            }
+        }
+        exit 
+    }
+    if($EnableExperfwizManager)
+    {
+        $Script:experfwizManager.Start() 
+    }
+}
+
+Function Stop-DataCollections {
+
+    Write-HostWriter("Stopping the data collections")
+    if($EnableExtraTracing -and $Script:extraObject.StopLogman() -ne  [ExtraLogman.StatusCode]::Success)
+    {
+        if($EnableEmailNotification)
+        {
+            $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to stop extra trace.")
+            $Script:mailMessageObject.UpdateMessageBody("We attempted to stop extra trace after an issue was detected. Data could be overwritten in this data collection.")
+            Send-MailObject -SendMail $Script:mailMessageObject
+        }
+    }
+    if($EnableNetshTrace -and $Script:netshTraceObject.StopTrace() -ne [NetshTraceObject.StatusCode]::Success) 
+    {
+        #failed to stop the netsh trace for some reason 
+        if($EnableEmailNotification)
+        {
+            $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to stop netsh trace")
+            $Script:mailMessageObject.UpdateMessageBodyTypeArray($Script:netshTraceObject.GetFailedServerStatusDetails())
+            Send-MailObject -SendMail $Script:mailMessageObject 
+        }
+
+    }
+    if($EnableExperfwizManager)
+    {
+        Write-HostWriter("Waiting to stop experfwiz for 5 minutes from the time of the issue.")
+        do{
+            Sleep 10
+        }while($Script:issueTime.AddMinutes(5) -gt [DateTime]::Now)
+        $Script:experfwizManager.Stop() 
+    }
+
+}
+
+Function Create-DataCollectionObjects {
+
+    if($EnableEmailNotification)
+    {
+        $params = @{
+            SMTPSender = $SMTPSender
+            SMTPRecipients = $SMTPRecipients
+            SMTPServerNameOrIPAddress = $SMTPServerNameOrIPAddress
+            MessageSubject = "Monitor Events Script"
+            CustomTestMessageSubject = "Monitor Events Script Test Of Send-Message"
+        }
+        if($MailCreds -ne $null)
+        {
+            $params.Add("Credentials",$MailCreds)
+        }
+        $Script:mailMessageObject = New-MailMessageObject @params
+    }
+
+    if($EnableNetshTrace)
+    {
+        $Script:netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath -CustomProviderString "provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7 provider='{E53C6823-7BB8-44BB-90DC-3F86090D48A6}' keywords=0x8000000000ffffff level=0x7 provider='{2F07E2EE-15DB-40F1-90EF-9D7BA282188A}' keywords=0x80007fff000fffff level=0x7"
+    }
+    if($EnableExtraTracing)
+    {
+        $Script:extraObject = New-ExtraLogmanObject -SavePath $SaveAllDataPath -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent -ServerList $Servers
+        if($Script:extraObject.SaveExtraConfigToAllServers() -ne [ExtraLogman.StatusCode]::Success)
+        {
+            if($EnableEmailNotification)
+            {
+                $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to save out extra config files to the servers --- stopping script")
+                Send-MailObject -SendMail $Script:mailMessageObject
+            }
+
+            exit 
+        }
+        if($Script:extraObject.DeleteLogman() -ne [ExtraLogman.StatusCode]::Success)
+        {
+            #do nothing for now
+        }
+        if($Script:extraObject.CreateLogman() -ne [ExtraLogman.StatusCode]::Success)
+        {
+            if($EnableEmailNotification)
+            {
+                $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Failed to create Extra Trace -- stopping script")
+                Send-MailObject -SendMail $Script:mailMessageObject
+            }
+            exit 
+        }
+    }
+    if($MDBFailureItemTagMonitorEnabled)
+    {
+        $dbGUIDs = @() 
+        foreach($db in $ActiveDatabaseGUIDs)
+        {
+            $dbGUIDs += $db.ToUpper() 
+        }
+        $Script:eventLogMonitorObject = New-MDBFailureItemTagMonitor -TagIDs $MDBFailureItemTags -MonitorOnlyDBs $dbGUIDs
+    }
+    else 
+    {
+        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers 
+    }
+
+    if($EnableExperfwizManager)
+    {
+        $Script:experfwizManager = New-ExperfwizManagerObject -ExperfwizDirectory $SaveAllDataPath -Interval $ExperfwizInterval -MaxFileSize 10240
+    }
+
+}
+
 Function Main {
     Write-HostWriter $display
     if(!(Confirm-Administrator))
@@ -1366,100 +1887,49 @@ Function Main {
         Write-HostWriter("Need to run the script as administrator.")
         exit 
     }
-    $params = @{
-        SMTPSender = $SMTPSender
-        SMTPRecipients = $SMTPRecipients
-        SMTPServerNameOrIPAddress = $SMTPServerNameOrIPAddress
-        MessageSubject = "Monitor Events Script"
-        CustomTestMessageSubject = "Monitor Events Script Test Of Send-Message"
-    }
-    if($MailCreds -ne $null)
-    {
-        $params.Add("Credentials",$MailCreds)
-    }
-    $mailObject = New-MailMessageObject @params
-    $netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath -CustomProviderString "provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7 provider='{E53C6823-7BB8-44BB-90DC-3F86090D48A6}' keywords=0x8000000000ffffff level=0x7 provider='{2F07E2EE-15DB-40F1-90EF-9D7BA282188A}' keywords=0x80007fff000fffff level=0x7"
-    $extraObject = New-ExtraLogmanObject -SavePath $SaveAllDataPath -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent -ServerList $Servers
-    $eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers 
 
-    if($extraObject.SaveExtraConfigToAllServers() -ne [ExtraLogman.StatusCode]::Success)
-    {
-        $mailObject.UpdateMessageSubject("Monitor Events Script Failed to save out extra config files to the servers --- stopping script")
-        Send-MailObject -SendMail $mailObject
-        exit 
-    }
-    if($extraObject.DeleteLogman() -ne [ExtraLogman.StatusCode]::Success)
-    {
-        #do nothing for now
-    }
-    if($extraObject.CreateLogman() -ne [ExtraLogman.StatusCode]::Success)
-    {
-        $mailObject.UpdateMessageSubject("Monitor Events Script Failed to create Extra Trace -- stopping script")
-        Send-MailObject -SendMail $mailObject
-        exit 
-    }
-
+    Create-DataCollectionObjects
+ 
     $issueCount = 0 
     while($issueCount -lt $IssueLimit)
     {
-        if($extraObject.StartLogman() -ne [ExtraLogman.StatusCode]::Success)
+
+        Start-DataCollections
+        $Script:eventLogMonitorObject.ResetStatus()
+        Write-Debug("hmm")
+        $Script:eventLogMonitorObject.MonitorLoop()
+        $Script:issueTime = [Datetime]::Now
+        Write-Host("Issue detected at {0}" -f $Script:issueTime)
+        Stop-DataCollections
+        if($EnableEmailNotification)
         {
-            $mailObject.UpdateMessageSubject("Monitor Events Script Failed to start extra trace -- stopping script")
-            Send-MailObject -SendMail $mailObject
-            exit 
+            $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script Detected {0}" -f $Script:issueTime)
+            $MessageBody = @("Issue event details: ")
+            $MessageBody += $Script:eventLogMonitorObject.GetEventData()
+            $Script:mailMessageObject.UpdateMessageBodyTypeArray($MessageBody)
+            Send-MailObject -SendMail $Script:mailMessageObject 
         }
-        if($netshTraceObject.StartTrace() -ne [NetshTraceObject.StatusCode]::Success) 
-        {
-            $MessageBody = $netshTraceObject.GetFailedServerStatusDetails()
-            $netshTraceObject.StopTrace()
-            $mailObject.UpdateMessageSubject("Monitor Events Script Failed to start netsh trace -- stopping script")
-            $mailObject.UpdateMessageBodyTypeArray($MessageBody)
-            Send-MailObject -SendMail $mailObject
-            if($extraObject.StopLogman() -ne [ExtraLogman.StatusCode]::Success)
-            {
-                $mailObject.UpdateMessageSubject("Monitor Events Script Failed to stop extra trace.")
-                $mailObject.UpdateMessageBody("Please stop the data collection ASAP to avoid extra from continuing to run on the systems")
-                Send-MailObject -SendMail $mailObject
-            }
-            exit 
-        }
-        $eventLogMonitorObject.ResetStatus()
-        $eventLogMonitorObject.MonitorLoop()
-        $issueTime = [Datetime]::Now
-        if($extraObject.StopLogman() -ne  [ExtraLogman.StatusCode]::Success)
-        {
-            $mailObject.UpdateMessageSubject("Monitor Events Script Failed to stop extra trace.")
-            $mailObject.UpdateMessageBody("We attempted to stop extra trace after an issue was detected. Data could be overwritten in this data collection.")
-            Send-MailObject -SendMail $mailObject
-        }
-        if($netshTraceObject.StopTrace() -ne [NetshTraceObject.StatusCode]::Success) 
-        {
-            #failed to stop the netsh trace for some reason 
-            $mailObject.UpdateMessageSubject("Monitor Events Script Failed to stop netsh trace")
-            $mailObject.UpdateMessageBodyTypeArray($netshTraceObject.GetFailedServerStatusDetails())
-            Send-MailObject -SendMail $mailObject 
-        }
-        $mailObject.UpdateMessageSubject("Monitor Events Script Detected {0}" -f $issueTime)
-        $MessageBody = @("Issue event details: ")
-        $MessageBody += $eventLogMonitorObject.GetEventData()
-        $mailObject.UpdateMessageBodyTypeArray($MessageBody)
-        Send-MailObject -SendMail $mailObject 
+        Write-HostWriter("Restarting the data collection process as issue count hasn't been met.")
         $issueCount++
     }
 
-    $mailObject.UpdateMessageSubject("Monitor Events Script -- Stopped Limit Reached")
-    $mailObject.UpdateMessageBody(("Limit of {0} was reached. If you want to continue getting data, please restart the script" -f $IssueLimit))
-    Send-MailObject -SendMail $mailObject 
+    if($EnableEmailNotification)
+    {
+        $Script:mailMessageObject.UpdateMessageSubject("Monitor Events Script -- Stopped Limit Reached")
+        $Script:mailMessageObject.UpdateMessageBody(("Limit of {0} was reached. If you want to continue getting data, please restart the script" -f $IssueLimit))
+        Send-MailObject -SendMail $Script:mailMessageObject 
+    }
+
 }
 
 
 ######### Stop Data Collectors ##############
 if($StopDataCollectors)
 {   
-    $netshTraceObj = New-NetshTraceObject -ServerList $Servers 
-    $netshTraceObj.StopTrace()
-    $extraObject = New-ExtraLogmanObject -ServerList $Servers -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent
-    $extraObject.StopLogman()
+    $netshTraceObject = New-NetshTraceObject -ServerList $Servers 
+    $netshTraceObject.StopTrace()
+    $Script:extraObject = New-ExtraLogmanObject -ServerList $Servers -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent
+    $Script:extraObject.StopLogman()
 
     exit 
 }
@@ -1467,17 +1937,20 @@ if($StopDataCollectors)
 
 ####### Check for Parameter Issues ##########
 $failedString = "Failed to provide valid {0}."
-if([string]::IsNullOrEmpty($SMTPSender))
+if($EnableEmailNotification)
 {
-    throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPSender")
-}
-if([string]::IsNullOrEmpty($SMTPRecipients))
-{
-    throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPRecipients")
-}
-if([string]::IsNullOrEmpty($SMTPServerNameOrIPAddress))
-{
-    throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPServerNameOrIPAddress")
+    if([string]::IsNullOrEmpty($SMTPSender))
+    {
+        throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPSender")
+    }
+    if([string]::IsNullOrEmpty($SMTPRecipients))
+    {
+        throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPRecipients")
+    }
+    if([string]::IsNullOrEmpty($SMTPServerNameOrIPAddress))
+    {
+        throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SMTPServerNameOrIPAddress")
+    }
 }
 if(-not(Test-Path -Path $SaveAllDataPath))
 {
