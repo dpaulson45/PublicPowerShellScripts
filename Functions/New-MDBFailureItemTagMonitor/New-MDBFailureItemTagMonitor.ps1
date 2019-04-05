@@ -9,7 +9,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.4
+#Function Version 1.5
 #[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
 Add-Type -TypeDefinition @"
     namespace MDBFailureItemTag
@@ -432,7 +432,7 @@ $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorLoop"
     
     while($true)
     {
-        if($this.MonitorEvents -eq [MDBFailureItemTag.StatusCode]::ConditionMet)
+        if($this.MonitorEvents() -eq [MDBFailureItemTag.StatusCode]::ConditionMet)
         {
             return [MDBFailureItemTag.StatusCode]::ConditionMet
         }
