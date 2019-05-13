@@ -7,10 +7,11 @@ param(
 [Parameter(Mandatory=$true)][string]$SMTPServer,
 [Parameter(Mandatory=$false)]$Credentials,
 [parameter(Mandatory=$false)]$MessageBody = " ",
+[Parameter(Mandatory=$false)][string[]]$Attachments,
 [Parameter(Mandatory=$false)][int]$Port = 25
 )
 
-#Function Version 1.0
+#Function Version 1.1
 $messageError = $false 
     
 try
@@ -28,8 +29,23 @@ try
     {
         $params.Add("Credential", $Credentials)
     }
+    if($Attachments -ne $null -and $Attachments.Count -gt 0)
+    {
+        $addAttachments = @()
+        foreach($attachment in $Attachments)
+        {
+            if(Test-Path $attachment)
+            {
+                $addAttachments += $attachment
+            }
+        }
+        if($addAttachments.Count -gt 0)
+        {
+            $params.Add("Attachments", $addAttachments)
+        }
+    }
 
-    Send-Message @params -ErrorAction stop 
+    Send-MailMessage @params -ErrorAction stop 
 
 }
 catch
