@@ -1,18 +1,34 @@
 Function Get-ServerOperatingSystemVersion {
 [CmdletBinding()]
 param(
-[string]$OSBuildNumberVersion
+[string]$OSBuildNumberVersion,
+[scriptblock]$VerboseFunctionCaller
 )
-#Function Version 1.2
+
+#Function Version 1.3
+Function Write-VerboseWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString 
+)
+    if($VerboseFunctionCaller -eq $null)
+    {
+        Write-Verbose $WriteString
+    }
+    else 
+    {
+        &$VerboseFunctionCaller $WriteString
+    }
+}
+
 if($OSBuildNumberVersion -eq [string]::Empty -or $OSBuildNumberVersion -eq $null)
 {
-    Write-Verbose("Getting the local machine version build number")
+    Write-VerboseWriter("Getting the local machine version build number")
     $OSBuildNumberVersion = (Get-WmiObject -Class Win32_OperatingSystem).Version
-    Write-Verbose("Got {0} for the version build number" -f $OSBuildNumberVersion)
+    Write-VerboseWriter("Got {0} for the version build number" -f $OSBuildNumberVersion)
 }
 else 
 {
-    Write-Verbose("Passed - [string]OSBuildNumberVersion : {0}" -f $OSBuildNumberVersion)
+    Write-VerboseWriter("Passed - [string]OSBuildNumberVersion : {0}" -f $OSBuildNumberVersion)
 }
 
 [string]$osReturnValue = ""
@@ -28,6 +44,6 @@ switch ($OSBuildNumberVersion)
     default {$osReturnValue = "Unknown"}
 }
 
-Write-Verbose("Returned: {0}" -f $osReturnValue)
+Write-VerboseWriter("Returned: {0}" -f $osReturnValue)
 return [string]$osReturnValue
 }
