@@ -1,24 +1,14 @@
 Function Get-ServerOperatingSystemVersion {
 [CmdletBinding()]
 param(
-[string]$OSBuildNumberVersion,
-[scriptblock]$VerboseFunctionCaller
+[string]$OSBuildNumberVersion
 )
 
-#Function Version 1.3
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($VerboseFunctionCaller -eq $null)
-    {
-        Write-Verbose $WriteString
-    }
-    else 
-    {
-        &$VerboseFunctionCaller $WriteString
-    }
-}
+#Function Version 1.4
+<#
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+#>
 
 if($OSBuildNumberVersion -eq [string]::Empty -or $OSBuildNumberVersion -eq $null)
 {
