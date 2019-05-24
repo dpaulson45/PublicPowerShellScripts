@@ -46,6 +46,27 @@ Function Get-WinHttpSettings {
         return $(if($Proxy -eq [string]::Empty){"<None>"} else {$Proxy})
     }
 
+    Function Get-PendingSCCMReboot {
+
+        try 
+        {
+            $pendingReboot = $false 
+            $sccmReboot = Invoke-CimMethod -Namespace 'Root\ccm\clientSDK' -ClassName 'CCM_ClientUtilities' -Name 'DetermineIfRebootPending' -ErrorAction Stop
+            
+            if($sccmReboot)
+            {
+                if($sccmReboot.RebootPending -or $sccmReboot.IsHardRebootPending)
+                {
+                    $pendingReboot = $true 
+                }
+            }
+        }
+        catch 
+        {
+            throw 
+        }
+    }
+
     $myFQDN=(Get-WmiObject win32_computersystem).DNSHostName+"."+(Get-WmiObject win32_computersystem).Domain
 
 Describe "Testing Invoke-ScriptBlockHandler" {
@@ -64,6 +85,10 @@ Describe "Testing Invoke-ScriptBlockHandler" {
             $httpProxyPath32 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections"
             $testResults = Get-WinHttpSettings $httpProxyPath32
             $results = Invoke-ScriptBlockHandler -ComputerName $env:COMPUTERNAME -ScriptBlock ${Function:Get-WinHttpSettings} -ScriptBlockDescription "Getting Http Proxy Settings 32 bit" -ArgumentList $httpProxyPath32
+        }
+        It "Pending SCCM Reboot" {
+            $results = Invoke-ScriptBlockHandler -ComputerName $env:COMPUTERNAME -ScriptBlock ${Function:Get-PendingSCCMReboot} -ScriptBlockDescription "Getting Pending SCCM Reboot Result" 
+            $results | Should Be $false 
         }
     }
     Context "Remote Execution Test Results - Pester in Admin" {
