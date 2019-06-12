@@ -15,6 +15,7 @@ if(Test-Path $functionDirectory)
 
 $defaultMainScriptContent = @"
 Function {0} {1}
+[CmdletBinding()]
 param(
 )
 #[System.Collections.Generic.List[System.Object]]`$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
