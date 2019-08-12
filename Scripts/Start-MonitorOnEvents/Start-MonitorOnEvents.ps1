@@ -21,7 +21,9 @@ param(
 [Parameter(Mandatory=$false)][array]$MDBFailureItemTags = @(38,39),
 [Parameter(Mandatory=$false)][array]$ActiveDatabaseGUIDs,
 [Parameter(Mandatory=$false)][string]$EventLogName = "Application",
-[Parameter(Mandatory=$false)][int]$EventID = 2024,
+[Parameter(Mandatory=$false)][int]$EventID = 2080,
+[Parameter(Mandatory=$false)][string]$EventTaskDisplayNameFilter,
+[Parameter(Mandatory=$false)][string]$EventMessageFilter,
 [Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $false,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent,
 [Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $false,
@@ -32,7 +34,7 @@ param(
 [Parameter(Mandatory=$false)][switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.5
+$scriptVersion = 0.6
 
 $display = @"
 
@@ -2010,7 +2012,7 @@ Function Create-DataCollectionObjects {
     }
     else 
     {
-        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers 
+        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter 
     }
 
     if($EnableExperfwizManager)
