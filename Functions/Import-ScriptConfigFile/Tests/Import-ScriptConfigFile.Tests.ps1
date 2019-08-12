@@ -28,7 +28,7 @@ foreach($line in $content)
     }
 }
 
-$testingFile = "{0}\Tests\TestingConditions.txt" -f $here 
+$testingFile = "{0}\Tests\TestingConditions.config" -f $here 
 Write-Host("Testing file: {0}" -f $testingFile)
 Import-ScriptConfigFile -ScriptConfigFileLocation $testingFile 
 Describe "Testing Import-ScriptConfigFile" {
