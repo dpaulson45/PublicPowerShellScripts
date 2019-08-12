@@ -3,6 +3,8 @@ Function New-EventLogMonitorObject {
 param(
 [Parameter(Mandatory=$false)][string]$LogName = "Application",
 [Parameter(Mandatory=$false)][int]$EventID,
+[Parameter(Mandatory=$false)][string]$TaskDisplayNameFilter,
+[Parameter(Mandatory=$false)][string]$MessageFilter,
 [Parameter(Mandatory=$false)][array]$ServerList,
 [Parameter(Mandatory=$false)][int]$UpdateEveryXMinutes = 5,
 [Parameter(Mandatory=$false)][int]$SleepTime = 1,
@@ -11,7 +13,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.2
+#Function Version 1.3
 Add-Type -TypeDefinition @"
     namespace EventLogMonitor
     {
@@ -111,6 +113,8 @@ $eventLogMonitorObject = New-Object pscustomobject
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerList" -Value $ServerList
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventID" -Value $EventID
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "LogName" -Value $LogName
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "MessageFilter" -Value $MessageFilter
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "TaskDisplayNameFilter" -Value $TaskDisplayNameFilter
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "StartTime" -Value ([datetime]::MinValue)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" -Value ([DateTime]::Now)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
@@ -222,10 +226,54 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServe
         else 
         {
             $this.WriteHostWriter(("Server {0} had event that we are looking for" -f $server))
-            $this.ServerStatus[$server] = [EventLogMonitor.StatusCode]::ConditionMet
-            $this.ServerEventData[$server] = $newEvents
-            $eventOccurred = $true 
-            break;
+            if([string]::IsNullOrEmpty($this.MessageFilter) -and [string]::IsNullOrEmpty($this.TaskDisplayNameFilter))
+            {
+                $this.ServerStatus[$server] = [EventLogMonitor.StatusCode]::ConditionMet
+                $this.ServerEventData[$server] = $newEvents
+                $eventOccurred = $true 
+                break;
+            }
+            else 
+            {
+                $this.WriteHostWriter(("Need to filter down the results some more..."))
+                foreach($event in $newEvents)
+                {
+                    $validEvent = $false 
+                    if(!([string]::IsNullOrEmpty($this.MessageFilter)))
+                    {
+                        if($event.Message.Contains($this.MessageFilter))
+                        {
+                            $validEvent = $true 
+                            $this.WriteVerboseWriter("Event met message filter")
+                        }
+                        else 
+                        {
+                            $this.WriteVerboseWriter("Event didn't meet message filter")
+                            continue;
+                        }
+                    }
+                    if(!([string]::IsNullOrEmpty($this.TaskDisplayNameFilter)))
+                    {
+                        if($event.TaskDisplayName -eq ($this.TaskDisplayNameFilter))
+                        {
+                            $validEvent = $true 
+                            $this.WriteVerboseWriter("Event met task display name filter")
+                        }
+                        else 
+                        {
+                            $this.WriteVerboseWriter("Event didn't meet display name filter")
+                            continue; 
+                        }
+                    }
+                    if($validEvent)
+                    {
+                        $this.ServerStatus[$server] = [EventLogMonitor.StatusCode]::ConditionMet
+                        $this.ServerEventData[$server] = $newEvents
+                        $eventOccurred = $true 
+                        break;
+                    }
+                }
+            }
         }
     }
 
