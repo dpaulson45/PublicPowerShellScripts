@@ -20,11 +20,11 @@ param(
 [Parameter(Mandatory=$false)][bool]$MDBFailureItemTagMonitorEnabled = $false,
 [Parameter(Mandatory=$false)][array]$MDBFailureItemTags = @(38,39),
 [Parameter(Mandatory=$false)][array]$ActiveDatabaseGUIDs,
-[Parameter(Mandatory=$false)][string]$EventLogName = "Microsoft-Exchange-HighAvailability/BlockReplication",
+[Parameter(Mandatory=$false)][string]$EventLogName = "Application",
 [Parameter(Mandatory=$false)][int]$EventID = 2024,
-[Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $true,
+[Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $false,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent,
-[Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $true,
+[Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $false,
 [Parameter(Mandatory=$false)][int]$ExperfwizInterval = 1,
 [Parameter(Mandatory=$false)][bool]$EnableNetshTrace = $false,
 [Parameter(Mandatory=$false)][int]$IssueLimit = 1,
@@ -46,14 +46,7 @@ $display = @"
 
 "@ -f $scriptVersion
 
-
-$ExtraTraceConfigFileContent = @("TraceLevels:Debug,Warning,Error,Fatal,Info,Performance,Function,Pfd",
-"ManagedStore.MapiDisp:RpcBuffer,RpcOperation,RpcDetail,RpcContextPool",
-"ManagedStore.MapiRpc:General,RpcOperation,FaultInjection",
-"MapiNet:tagCxhPool,tagLocation",
-"ManagedStore.RpcProxy:ProxyAdmin",
-"FilteredTracing:No",
-"InMemoryTracing:No")
+$scriptConfig = "{0}\{1}.config" -f (Split-Path -Parent $MyInvocation.MyCommand.Path), (Split-Path -Leaf $MyInvocation.MyCommand.Path)
 
 
 ########################
@@ -1929,7 +1922,7 @@ Function Create-DataCollectionObjects {
 
     if($EnableNetshTrace)
     {
-        $Script:netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath -CustomProviderString "provider='{EB004A05-9B1A-11D4-9123-0050047759BC}' keywords=0x3fffffff level=0x7 provider='{E53C6823-7BB8-44BB-90DC-3F86090D48A6}' keywords=0x8000000000ffffff level=0x7 provider='{2F07E2EE-15DB-40F1-90EF-9D7BA282188A}' keywords=0x80007fff000fffff level=0x7"
+        $Script:netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath 
     }
     if($EnableExtraTracing)
     {
@@ -1988,7 +1981,6 @@ Function Main {
     }
 
     Create-DataCollectionObjects
- 
     $issueCount = 0 
     while($issueCount -lt $IssueLimit)
     {
@@ -2023,6 +2015,11 @@ Function Main {
 
 
 ######### Stop Data Collectors ##############
+if(Test-Path $scriptConfig)
+{
+    Import-ScriptConfigFile -ScriptConfigFileLocation $scriptConfig 
+}
+
 if($StopDataCollectors)
 {   
     $netshTraceObject = New-NetshTraceObject -ServerList $Servers 
@@ -2055,7 +2052,5 @@ if(-not(Test-Path -Path $SaveAllDataPath))
 {
     throw [System.Management.Automation.ParameterBindingException] ($failedString -f "SaveAllDataPath. Please provide a valid path.")
 }
-
-
 
 Main 
