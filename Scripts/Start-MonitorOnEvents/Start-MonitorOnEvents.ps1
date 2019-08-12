@@ -2017,7 +2017,7 @@ Function Create-DataCollectionObjects {
 
     if($EnableExperfwizManager)
     {
-        $Script:experfwizManager = New-ExperfwizManagerObject -ExperfwizDirectory $SaveAllDataPath -Interval $ExperfwizInterval -MaxFileSize 10240
+        $Script:experfwizManager = New-ExperfwizManagerObject -SaveDirectory $SaveAllDataPath -Interval $ExperfwizInterval -MaxFileSize 10240
     }
 
 }
