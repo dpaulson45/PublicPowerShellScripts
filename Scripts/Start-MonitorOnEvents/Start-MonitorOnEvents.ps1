@@ -29,12 +29,15 @@ param(
 [Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $false,
 [Parameter(Mandatory=$false)][int]$ExperfwizInterval = 1,
 [Parameter(Mandatory=$false)][bool]$EnableNetshTrace = $false,
+[Parameter(Mandatory=$false)][int]$NetshTraceMaxSize = 2048,
+[Parameter(Mandatory=$false)][string]$NetshProviderString,
+[Parameter(Mandatory=$false)][string]$NetshScenario = "netconnection",
 [Parameter(Mandatory=$false)][int]$IssueLimit = 1,
 [Parameter(Mandatory=$false)][string]$SaveAllDataPath = ((Get-Location).Path),
 [Parameter(Mandatory=$false)][switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.6
+$scriptVersion = 0.7
 
 $display = @"
 
@@ -1972,7 +1975,7 @@ Function Create-DataCollectionObjects {
 
     if($EnableNetshTrace)
     {
-        $Script:netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath 
+        $Script:netshTraceObject = New-NetshTraceObject -ServerList $Servers -SaveDirectory $SaveAllDataPath -Scenario $NetshScenario -CustomProviderString $NetshProviderString -MaxSize $NetshTraceMaxSize 
     }
     if($EnableExtraTracing)
     {
