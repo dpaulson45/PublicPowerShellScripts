@@ -1,2 +1,3 @@
 *.bak
 *.txt
+*PesterTests.Ignore*
