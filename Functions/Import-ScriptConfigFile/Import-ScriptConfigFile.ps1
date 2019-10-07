@@ -5,7 +5,7 @@ param(
 [Parameter(Mandatory=$false)][string]$MainSplitLineValue = "~"
 )
 
-#Function Version 1.0
+#Function Version 1.1
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -51,7 +51,20 @@ foreach($line in $readContent)
     $fullVariableType = $splitInfo[1]
     $variableValue = $splitInfo[2]
 
-    if($fullVariableType -like "array*")
+    if($fullVariableType -like "GetContent*")
+    {
+        Write-VerboseWriter("Detected GetContent")
+        if(Test-Path $variableValue)
+        {
+            $variableValue = Get-Content $variableValue
+        }
+        else 
+        {
+            Write-VerboseWriter("Failed to find {0}. Going to move on." -f $variableValue)
+            continue 
+        }
+    }
+    elseif($fullVariableType -like "array*")
     {
         Write-VerboseWriter("Detected array")
         $variableTypeSplit = $fullVariableType.Split("=")
