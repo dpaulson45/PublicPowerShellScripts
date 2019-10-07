@@ -12,11 +12,12 @@ param(
 [PSCredential]$RemoteCredentials,
 [int]$IncreaseMaxSizeTimes = 20,
 [int]$MaxStartUpdateLoop = 100,
+[bool]$SystemDataCollectorSet = $false,
 [bool]$VerboseEnabled = $false,
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
 )
-#Function Version 1.0
+#Function Version 1.1
 <#
 TODO: 
 - Be able to do none circular mode 
@@ -39,21 +40,34 @@ if($MaxSizeMB -lt 512)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid MaxSizeMB. Value must be greater than or equal to 512." 
 }
-if($PerformanceCounters -eq $null -or 
-    $PerformanceCounters.Count -eq 0)
+if((!($SystemDataCollectorSet)) -and 
+    ($PerformanceCounters -eq $null -or 
+    $PerformanceCounters.Count -eq 0))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters" 
+}
+if($SystemDataCollectorSet -and 
+    (!($PerformanceLogmanName.StartsWith("System\"))))
+{
+    $PerformanceLogmanName = "System\{0}" -f $PerformanceLogmanNames
+}
+if($SystemDataCollectorSet -and 
+    $PerformanceLogmanName.Contains(" "))
+{
+    $PerformanceLogmanName = '"{0}"' -f $PerformanceLogmanName
 }
 if($SampleInterval -lt 1 -or 
     $SampleInterval -gt 30)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid MaxSizeMB. Value must be greater than or equal to 1 and less than or equal to 30." 
 }
-if([string]::IsNullOrEmpty($SaveFileDirectory))
+if((!($SystemDataCollectorSet)) -and 
+    ([string]::IsNullOrEmpty($SaveFileDirectory)))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SaveFileDirectory" 
 }
-if(!(Test-Path $SaveFileDirectory))
+if((!($SystemDataCollectorSet)) -and 
+    (!(Test-Path $SaveFileDirectory)))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SaveFileDirectory. Path is not created." 
 }
@@ -143,6 +157,7 @@ $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "IncreaseMa
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "MaxStartUpdateLoop" -Value $MaxStartUpdateLoop
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "ServersStatus" -Value (New-ServersStatus)
+$performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "SystemDataCollectorSet" -Value $SystemDataCollectorSet
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
 $performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
 $performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
@@ -275,12 +290,22 @@ $performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman
 
 $performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "DeleteLogman" -Value {
     
+    if($this.SystemDataCollectorSet)
+    {
+        $this.WriteVerboseWriter("Can't delete a system data collector set.")
+        return [PerformanceLogman.StatusCode]::Success
+    }
     $status = $this.ExecuteLogmanAction([PerformanceLogman.Action]::Delete)
     return $status 
 }
 
 $performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "CreateLogman" -Value {
 
+    if($this.SystemDataCollectorSet)
+    {
+        $this.WriteVerboseWriter("Can't create a system data collector set.")
+        return [PerformanceLogman.StatusCode]::Success
+    }
     $servers = $this.Servers 
     [string]$path = $this.SaveFileDirectory
     if(!($path.EndsWith("\")))
