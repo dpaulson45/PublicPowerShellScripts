@@ -17,7 +17,7 @@ param(
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
 )
-#Function Version 1.1
+#Function Version 1.2
 <#
 TODO: 
 - Be able to do none circular mode 
@@ -61,6 +61,7 @@ if($SampleInterval -lt 1 -or
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid MaxSizeMB. Value must be greater than or equal to 1 and less than or equal to 30." 
 }
+<#
 if((!($SystemDataCollectorSet)) -and 
     ([string]::IsNullOrEmpty($SaveFileDirectory)))
 {
@@ -71,6 +72,7 @@ if((!($SystemDataCollectorSet)) -and
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SaveFileDirectory. Path is not created." 
 }
+#>
 if(!([string]::IsNullOrEmpty($FileVersioning)) -and 
     ($FileVersioning -ne "mmddhhmm" -and 
     $FileVersioning -ne "nnnnnn"))
