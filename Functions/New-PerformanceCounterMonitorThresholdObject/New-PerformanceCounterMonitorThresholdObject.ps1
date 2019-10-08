@@ -1,7 +1,7 @@
 Function New-PerformanceCounterMonitorThresholdObject {
 [CmdletBinding()]
 param(
-[hashtable]$PerformanceCounters,
+[hashtable]$PerformanceThresholdCounters,
 [int]$SampleInterval = 1,
 [int]$MaxSamples = 10,
 [int]$SleepInSeconds = 0,
@@ -17,7 +17,7 @@ Required Functions:
 #>
 <#
 This works remotely as well 
-[hashtable]$PerformanceCounters
+[hashtable]$PerformanceThresholdCounters
     [Key = \\serverName\logicaldisk(c:)\avg. disk sec/write]
         [value]
             [double]AverageThreshold
@@ -40,13 +40,13 @@ if($UpdateEveryXMinutes -lt 1)
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid UpdateEveryXMinutes. Provide a value greater than 1"
 }
 
-if($PerformanceCounters -eq $null -or 
-    $PerformanceCounters.Count -eq 0)
+if($PerformanceThresholdCounters -eq $null -or 
+    $PerformanceThresholdCounters.Count -eq 0)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters."
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters."
 } 
 
-foreach($key in $PerformanceCounters.Keys)
+foreach($key in $PerformanceThresholdCounters.Keys)
 {
     try 
     {
@@ -57,28 +57,28 @@ foreach($key in $PerformanceCounters.Keys)
         $info = "Failed to provide valid key '{0}'. Error: {1}" -f $key, ($Error[0].Exception)
         throw [System.Management.Automation.ParameterBindingException] $info 
     }
-    if([string]::IsNullOrEmpty($PerformanceCounters[$key].ThresholdType) -or 
-        ($PerformanceCounters[$key].ThresholdType -ne "GreaterThan" -and 
-        $PerformanceCounters[$key].ThresholdType -ne "LessThan"))
+    if([string]::IsNullOrEmpty($PerformanceThresholdCounters[$key].ThresholdType) -or 
+        ($PerformanceThresholdCounters[$key].ThresholdType -ne "GreaterThan" -and 
+        $PerformanceThresholdCounters[$key].ThresholdType -ne "LessThan"))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a ThresholdType property with a string value of 'GreaterThan' or 'LessThan'"
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a ThresholdType property with a string value of 'GreaterThan' or 'LessThan'"
     }
-    if($PerformanceCounters[$key].AverageThreshold -eq $null -or 
-        $PerformanceCounters[$key].AverageThreshold.Gettype().Name -ne "Double")
+    if($PerformanceThresholdCounters[$key].AverageThreshold -eq $null -or 
+        $PerformanceThresholdCounters[$key].AverageThreshold.Gettype().Name -ne "Double")
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a AverageThreshold property with a double type value." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a AverageThreshold property with a double type value." 
     }
-    if(($PerformanceCounters[$key].ThresholdType -eq "GreaterThan") -and 
-        (($PerformanceCounters[$key].MaxSpikeThreshold -eq $null -or 
-        $PerformanceCounters[$key].MaxSpikeThreshold.Gettype().Name -ne "Double")))
+    if(($PerformanceThresholdCounters[$key].ThresholdType -eq "GreaterThan") -and 
+        (($PerformanceThresholdCounters[$key].MaxSpikeThreshold -eq $null -or 
+        $PerformanceThresholdCounters[$key].MaxSpikeThreshold.Gettype().Name -ne "Double")))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a MaxSpikeThreshold property with a double type value, when ThresholdType is set to GreaterThan." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a MaxSpikeThreshold property with a double type value, when ThresholdType is set to GreaterThan." 
     }
-    if(($PerformanceCounters[$key].ThresholdType -eq "LessThan") -and 
-        ($PerformanceCounters[$key].MinDipThreshold -eq $null -or 
-        $PerformanceCounters[$key].MinDipThreshold.Gettype().Name -ne "Double"))
+    if(($PerformanceThresholdCounters[$key].ThresholdType -eq "LessThan") -and 
+        ($PerformanceThresholdCounters[$key].MinDipThreshold -eq $null -or 
+        $PerformanceThresholdCounters[$key].MinDipThreshold.Gettype().Name -ne "Double"))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a MinDipThreshold property with a double type value, when ThresholdType is set to LessThan." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a MinDipThreshold property with a double type value, when ThresholdType is set to LessThan." 
     }
 }
 
@@ -99,7 +99,7 @@ Function Get-Counters {
     [OutputType([System.Collections.Generic.List[System.Object]])]
 
     [System.Collections.Generic.List[System.Object]]$counterList = New-Object -TypeName System.Collections.Generic.List[System.Object]
-    foreach($key in $PerformanceCounters.Keys)
+    foreach($key in $PerformanceThresholdCounters.Keys)
     {
         $counterList.Add($key)
     }
@@ -118,7 +118,7 @@ Function Get-ThresholdMetObjectDetails {
 
 $perfMonitorObject = New-Object PSCustomObject 
 
-$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "PerformanceCounters" -Value $PerformanceCounters
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "PerformanceThresholdCounters" -Value $PerformanceThresholdCounters
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SampleInterval" -Value $SampleInterval
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "MaxSamples" -Value $MaxSamples
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SleepInSeconds" -Value $SleepInSeconds
@@ -227,7 +227,7 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
     foreach($counterResults in $results)
     {
         $counterName = $counterResults.Name 
-        $counterPassedObj = $this.PerformanceCounters[$counterName]
+        $counterPassedObj = $this.PerformanceThresholdCounters[$counterName]
         $minMaxAvgResults = $this.GetPerformanceCounterMinMaxAverageCorrectly($counterResults.Group)
         
         $thresholdType = ([string]::Empty)
