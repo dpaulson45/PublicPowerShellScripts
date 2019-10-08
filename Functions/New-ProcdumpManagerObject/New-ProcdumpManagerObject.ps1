@@ -11,11 +11,17 @@ param(
 [int]$SecondsWait = 30, 
 [array]$Servers,
 [bool]$VerboseEnabled = $false,
+[object]$LoggerObject,
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
 )
 #This Script requires Invoke-Command to be able to be run, even locally. 
-#Function Version 1.0
+#Function Version 1.1
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 <# 
 #TODO List: 
 - Add Verbose information 
@@ -115,35 +121,6 @@ Function Test-UsingProcessIDToServer {
     return $true 
 }
 
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.VerboseFunctionCaller -eq $null -and 
-        $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan 
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-        
-Function Write-HostWriter{
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else 
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
-
 Test-ValidProcdumpPath
 Test-ValidDumpPath
 if(Test-UsingProcessIDToServer)
@@ -162,9 +139,10 @@ $procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "NumberOfDump
 $procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "SecondsWait" -Value $SecondsWait 
 $procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
+$procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject 
 $procdumpManagerObject | Add-Member -MemberType NoteProperty -Name "UsingProcessIDToServer" -Value (Test-UsingProcessIDToServer)
-$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
-$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
+$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
+$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 
 if($HostFunctionCaller -ne $null)
 {
