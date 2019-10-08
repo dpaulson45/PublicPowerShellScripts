@@ -1,5 +1,5 @@
 #Function Version 1.0
-Function Write-HostWriter{
+Function Write-ScriptMethodHostWriter{
 param(
 [Parameter(Mandatory=$true)][string]$WriteString
 )
