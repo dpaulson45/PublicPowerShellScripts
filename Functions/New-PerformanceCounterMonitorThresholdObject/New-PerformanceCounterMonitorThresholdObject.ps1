@@ -1,18 +1,23 @@
 Function New-PerformanceCounterMonitorThresholdObject {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$true)][hashtable]$Perfcounters,
-[Parameter(Mandatory=$false)][int]$SampleInterval = 1,
-[Parameter(Mandatory=$false)][int]$MaxSamples = 10,
-[Parameter(Mandatory=$false)][int]$SleepTime = 0,
-[Parameter(Mandatory=$false)][int]$UpdateEveryXMinutes = 5,
-[Parameter(Mandatory=$false)][object]$LoggerObject,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
+[hashtable]$PerformanceCounters,
+[int]$SampleInterval = 1,
+[int]$MaxSamples = 10,
+[int]$SleepInSeconds = 0,
+[int]$UpdateEveryXMinutes = 5,
+[object]$LoggerObject,
+[scriptblock]$HostFunctionCaller,
+[scriptblock]$VerboseFunctionCaller
 )
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 <#
 This works remotely as well 
-[hashtable]$Perfcounters
+[hashtable]$PerformanceCounters
     [Key = \\serverName\logicaldisk(c:)\avg. disk sec/write]
         [value]
             [double]AverageThreshold
@@ -21,7 +26,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.4
+#Function Version 1.5
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -35,7 +40,13 @@ if($UpdateEveryXMinutes -lt 1)
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid UpdateEveryXMinutes. Provide a value greater than 1"
 }
 
-foreach($key in $Perfcounters.Keys)
+if($PerformanceCounters -eq $null -or 
+    $PerformanceCounters.Count -eq 0)
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters."
+} 
+
+foreach($key in $PerformanceCounters.Keys)
 {
     try 
     {
@@ -46,60 +57,30 @@ foreach($key in $Perfcounters.Keys)
         $info = "Failed to provide valid key '{0}'. Error: {1}" -f $key, ($Error[0].Exception)
         throw [System.Management.Automation.ParameterBindingException] $info 
     }
-    if([string]::IsNullOrEmpty($Perfcounters[$key].ThresholdType) -or ($Perfcounters[$key].ThresholdType -ne "GreaterThan" -and $Perfcounters[$key].ThresholdType -ne "LessThan"))
+    if([string]::IsNullOrEmpty($PerformanceCounters[$key].ThresholdType) -or 
+        ($PerformanceCounters[$key].ThresholdType -ne "GreaterThan" -and 
+        $PerformanceCounters[$key].ThresholdType -ne "LessThan"))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Perfcounters object. Need to provide a ThresholdType property with a string value of 'GreaterThan' or 'LessThan'"
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a ThresholdType property with a string value of 'GreaterThan' or 'LessThan'"
     }
-    if($Perfcounters[$key].AverageThreshold -eq $null -or $Perfcounters[$key].AverageThreshold.Gettype().Name -ne "Double")
+    if($PerformanceCounters[$key].AverageThreshold -eq $null -or 
+        $PerformanceCounters[$key].AverageThreshold.Gettype().Name -ne "Double")
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Perfcounters object. Need to provide a AverageThreshold property with a double type value." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a AverageThreshold property with a double type value." 
     }
-    if(($Perfcounters[$key].ThresholdType -eq "GreaterThan") -and (($Perfcounters[$key].MaxSpikeThreshold -eq $null -or $Perfcounters[$key].MaxSpikeThreshold.Gettype().Name -ne "Double")))
+    if(($PerformanceCounters[$key].ThresholdType -eq "GreaterThan") -and 
+        (($PerformanceCounters[$key].MaxSpikeThreshold -eq $null -or 
+        $PerformanceCounters[$key].MaxSpikeThreshold.Gettype().Name -ne "Double")))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Perfcounters object. Need to provide a MaxSpikeThreshold property with a double type value, when ThresholdType is set to GreaterThan." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a MaxSpikeThreshold property with a double type value, when ThresholdType is set to GreaterThan." 
     }
-    if(($Perfcounters[$key].ThresholdType -eq "LessThan") -and ($Perfcounters[$key].MinDipThreshold -eq $null -or $Perfcounters[$key].MinDipThreshold.Gettype().Name -ne "Double"))
+    if(($PerformanceCounters[$key].ThresholdType -eq "LessThan") -and 
+        ($PerformanceCounters[$key].MinDipThreshold -eq $null -or 
+        $PerformanceCounters[$key].MinDipThreshold.Gettype().Name -ne "Double"))
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Perfcounters object. Need to provide a MinDipThreshold property with a double type value, when ThresholdType is set to LessThan." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounters object. Need to provide a MinDipThreshold property with a double type value, when ThresholdType is set to LessThan." 
     }
 }
-
-Function Write-VerboseWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($this.LoggerObject -ne $null)
-        {
-            $this.LoggerObject.WriteVerbose($WriteString)
-        }
-        elseif($this.VerboseFunctionCaller -eq $null)
-        {
-            Write-Verbose $WriteString
-        }
-        else 
-        {
-            $this.VerboseFunctionCaller($WriteString)
-        }
-    }
-    
-    Function Write-HostWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($this.LoggerObject -ne $null)
-        {
-            $this.LoggerObject.WriteHost($WriteString)
-        }
-        elseif($this.HostFunctionCaller -eq $null)
-        {
-            Write-Host $WriteString
-        }
-        else
-        {
-            $this.HostFunctionCaller($WriteString)
-        }
-    }
-
 
 Add-Type -TypeDefinition @"
     namespace PerfCounterMonitor
@@ -111,7 +92,6 @@ Add-Type -TypeDefinition @"
             ThresholdMet
         }
     }
-
 "@ 
 
 Function Get-Counters {
@@ -119,7 +99,7 @@ Function Get-Counters {
     [OutputType([System.Collections.Generic.List[System.Object]])]
 
     [System.Collections.Generic.List[System.Object]]$counterList = New-Object -TypeName System.Collections.Generic.List[System.Object]
-    foreach($key in $Perfcounters.Keys)
+    foreach($key in $PerformanceCounters.Keys)
     {
         $counterList.Add($key)
     }
@@ -128,7 +108,7 @@ Function Get-Counters {
 }
 
 Function Get-ThresholdMetObjectDetails {
-    $obj = New-Object pscustomobject 
+    $obj = New-Object PSCustomObject 
     $obj | Add-Member -MemberType NoteProperty -Name "Counter" -Value ([string]::Empty)
     $obj | Add-Member -MemberType NoteProperty -Name "MetValue" -Value ([double]0)
     $obj | Add-Member -MemberType NoteProperty -Name "Details" -Value ([string]::Empty)
@@ -136,22 +116,20 @@ Function Get-ThresholdMetObjectDetails {
     return $obj
 }
 
-$perfMonitorObject = New-Object pscustomobject 
+$perfMonitorObject = New-Object PSCustomObject 
 
-$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "PerformanceCounters" -Value $Perfcounters
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "PerformanceCounters" -Value $PerformanceCounters
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SampleInterval" -Value $SampleInterval
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "MaxSamples" -Value $MaxSamples
-$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SleepTime" -Value $SleepTime
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SleepInSeconds" -Value $SleepInSeconds
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "Counters" -Value (Get-Counters)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" -Value ([DateTime]::Now)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetDetails" -Value ([string]::Empty)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetObjectDetails" -Value (Get-ThresholdMetObjectDetails)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
-$perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
-$perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
-
-
+$perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
+$perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
 
 if($HostFunctionCaller -ne $null)
 {
@@ -176,7 +154,7 @@ Average calculation for Average counters taken from these references:
 https://msdn.microsoft.com/en-us/library/ms804010.aspx
 https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-averages-the-right-way-and-the-wrong-way/
 
-[arrayorlist]PerformanceCounterSamples
+[arrayOrList]PerformanceCounterSamples
     CookedValue
     RawValue
     TimeBase
@@ -185,7 +163,8 @@ https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-aver
 #>
     
     #Function Version 1.0
-    if($PerformanceCounterSamples -eq $null -or $PerformanceCounterSamples.Count -le 1)
+    if($PerformanceCounterSamples -eq $null -or 
+        $PerformanceCounterSamples.Count -le 1)
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounterSamples. Provide more than 1 sample as well."
     }
@@ -218,7 +197,7 @@ https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-aver
         $avg = ($PerformanceCounterSamples | Measure-Object -Property CookedValue -Average).Average
     }
 
-    $minMaxAvgObj = New-Object pscustomobject
+    $minMaxAvgObj = New-Object PSCustomObject
 
     $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Min" -Value $min
     $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Max" -Value $max
@@ -300,7 +279,7 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
         }
     }
     $this.WriteUpdate()
-    Start-Sleep $this.SleepTime
+    Start-Sleep $this.SleepInSeconds
     return [PerfCounterMonitor.StatusCode]::Passed
 }
 
