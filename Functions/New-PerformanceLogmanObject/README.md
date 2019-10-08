@@ -18,8 +18,11 @@ IncreaseMaxSizeTimes | Used for adjusting the amount of times you wish to update
 MaxStartUpdateLoop | Used for adjusting the amount of times you wish to attempt to start the logman due to a file that already exists. After the start attempt, the Data Collector Set is automatically updated so we try to start it again. Want to limit the amount of times we do this, so we will only go up to this value. Default value is 100. 
 SystemDataCollectorSet | Used for when you want to manage a System Data Collector Set, like "System\Active Directory Diagnostics". When this is enabled, only options are to start and stop the data collector set. Default value: False. 
 VerboseEnabled | Used to enable hidden verbose logging within the object's methods. 
+LoggerObject | Used to pass an object that issued to log the data that is written to screen or the verbose data in the background. *
 HostFunctionCaller | A script block that you can pass on object creation to allow a custom write host to be executed instead of the default that occurs. 
 VerboseFunctionCaller | A script block that you can pass on object creation to allow a custom verbose write host information to be executed instead of the default that occurs. 
+
+* For more information about the LoggerObject go here: https://github.com/dpaulson45/PublicPowerShellScripts/tree/master/Functions/New-LoggerObject
 
 # Methods 
 

@@ -14,10 +14,16 @@ param(
 [int]$MaxStartUpdateLoop = 100,
 [bool]$SystemDataCollectorSet = $false,
 [bool]$VerboseEnabled = $false,
+[object]$LoggerObject,
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
 )
-#Function Version 1.2
+#Function Version 1.3
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 <#
 TODO: 
 - Be able to do none circular mode 
@@ -104,34 +110,6 @@ Add-Type -TypeDefinition @"
     }
 "@
 
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.VerboseFunctionCaller -eq $null -and 
-        $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan 
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-
-Function Write-HostWriter{
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else 
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
 
 Function New-ServersStatus {
     $hasher = @{}
@@ -161,8 +139,9 @@ $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "ServersStatus" -Value (New-ServersStatus)
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "SystemDataCollectorSet" -Value $SystemDataCollectorSet
 $performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
-$performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
-$performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
+$performanceLogmanObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
+$performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
+$performanceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 
 if($HostFunctionCaller -ne $null)
 {
