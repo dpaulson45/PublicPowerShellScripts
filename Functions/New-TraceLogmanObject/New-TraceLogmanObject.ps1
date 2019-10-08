@@ -14,10 +14,16 @@ param(
 [bool]$EventTraceSessionsEnabled = $true,
 [bool]$OverwriteExistingFile = $false,
 [bool]$VerboseEnabled = $false,
+[object]$LoggerObject,
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
 )
-#Function Version 1.0
+#Function Version 1.1
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 <# 
 TODO: 
     - Handle EventTraceSessionsEnabled being enabled with FileVersioning 
@@ -101,35 +107,6 @@ Add-Type -TypeDefinition @"
     }
 "@
 
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.VerboseFunctionCaller -eq $null -and 
-        $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan 
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-    
-Function Write-HostWriter{
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else 
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
-
 Function New-ServersStatus {
     $hasher = @{}
     foreach($server in $Servers)
@@ -158,8 +135,9 @@ $traceLogmanObject | Add-Member -MemberType NoteProperty -Name "OverwriteExistin
 $traceLogmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $traceLogmanObject | Add-Member -MemberType NoteProperty -Name "ServersStatus" -Value (New-ServersStatus)
 $traceLogmanObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
-$traceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
-$traceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
+$traceLogmanObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
+$traceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
+$traceLogmanObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 
 if($HostFunctionCaller -ne $null)
 {
