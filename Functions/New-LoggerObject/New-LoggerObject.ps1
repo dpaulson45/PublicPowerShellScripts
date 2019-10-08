@@ -3,52 +3,22 @@ Function New-LoggerObject {
 param(
 [Parameter(Mandatory=$false)][string]$LogDirectory = ".",
 [Parameter(Mandatory=$false)][string]$LogName = "Script_Logging",
-[Parameter(Mandatory=$false)][bool]$OverWriteLog = $false,
 [Parameter(Mandatory=$false)][bool]$EnableDateTime = $true,
 [Parameter(Mandatory=$false)][bool]$IncludeDateTimeToFileName = $true,
 [Parameter(Mandatory=$false)][int]$MaxFileSizeInMB = 10,
 [Parameter(Mandatory=$false)][int]$CheckSizeIntervalMinutes = 10,
 [Parameter(Mandatory=$false)][int]$NumberOfLogsToKeep = 10,
+[Parameter(Mandatory=$false)][bool]$VerboseEnabled,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.0
-#[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
-
-########################
-#
-# Write Functions 
-#
-########################
-
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.VerboseFunctionCaller -eq $null)
-    {
-        Write-Verbose $WriteString
-    }
-    else 
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-    
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
+#Function Version 1.1
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 
 ########################
 #
@@ -98,9 +68,10 @@ $loggerObject | Add-Member -MemberType NoteProperty -Name "CheckSizeIntervalMinu
 $loggerObject | Add-Member -MemberType NoteProperty -Name "NextFileCheckTime" -Value ((Get-Date).AddMinutes($CheckSizeIntervalMinutes))
 $loggerObject | Add-Member -MemberType NoteProperty -Name "InstanceNumber" -Value 1
 $loggerObject | Add-Member -MemberType NoteProperty -Name "NumberOfLogsToKeep" -Value $NumberOfLogsToKeep
+$loggerObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "ToLog" -Value ${Function:Write-ToLog}
-$loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
-$loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
+$loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
+$loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
 
 if($HostFunctionCaller -ne $null)
 {
