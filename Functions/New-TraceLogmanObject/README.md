@@ -18,8 +18,11 @@ Servers | Provide a list of servers that you wish to manage with this object.
 EventTraceSessionsEnabled | Enables sending the command to Event Trace Sessions without saving or scheduling. This means you don't need to use StartLogman() or DeleteLogman() when this option is enabled. Default $true. 
 OverwriteExistingFile | Enables the option to have logman overwrite the existing log file that is there. Default $false. 
 VerboseEnabled | Used to enable hidding verbose logging within the object's methods. 
+LoggerObject | Used to pass an object that issued to log the data that is written to screen or the verbose data in the background. *
 HostFunctionCaller | A script block that you can pass on object creation to allow a custom write host to be executed instead of the default that occurs. 
 VerboseFunctionCaller | A script block that you can pass on object creation to allow a custom verbose write host information to be executed instead of the default that occurs. 
+
+* For more information about the LoggerObject go here: https://github.com/dpaulson45/PublicPowerShellScripts/tree/master/Functions/New-LoggerObject
 
 # Methods 
 
