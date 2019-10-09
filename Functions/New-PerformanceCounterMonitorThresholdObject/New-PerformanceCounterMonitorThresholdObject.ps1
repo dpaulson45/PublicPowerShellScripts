@@ -21,12 +21,11 @@ This works remotely as well
     [Key = \\serverName\logicaldisk(c:)\avg. disk sec/write]
         [value]
             [double]AverageThreshold
-            [double]MaxSpikeThreshold
-            [double]MinDipThreshold
+            [double]MaxThreshold
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.5
+#Function Version 1.6
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -68,22 +67,15 @@ foreach($key in $PerformanceThresholdCounters.Keys)
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a AverageThreshold property with a double type value." 
     }
-    if(($PerformanceThresholdCounters[$key].ThresholdType -eq "GreaterThan") -and 
-        (($PerformanceThresholdCounters[$key].MaxSpikeThreshold -eq $null -or 
-        $PerformanceThresholdCounters[$key].MaxSpikeThreshold.Gettype().Name -ne "Double")))
+    if($PerformanceThresholdCounters[$key].MaxThreshold -eq $null -or 
+        $PerformanceThresholdCounters[$key].MaxThreshold.GetType().Name -ne "Double")
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a MaxSpikeThreshold property with a double type value, when ThresholdType is set to GreaterThan." 
-    }
-    if(($PerformanceThresholdCounters[$key].ThresholdType -eq "LessThan") -and 
-        ($PerformanceThresholdCounters[$key].MinDipThreshold -eq $null -or 
-        $PerformanceThresholdCounters[$key].MinDipThreshold.Gettype().Name -ne "Double"))
-    {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a MinDipThreshold property with a double type value, when ThresholdType is set to LessThan." 
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceThresholdCounters object. Need to provide a MaxThreshold property with a double type value."
     }
 }
 
 Add-Type -TypeDefinition @"
-    namespace PerfCounterMonitor
+    namespace PerformanceCounterMonitorThreshold
     {
         public enum StatusCode
         {
@@ -235,9 +227,9 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
 
         if($counterPassedObj.ThresholdType -eq "GreaterThan")
         {
-            if($minMaxAvgResults.Max -ge $counterPassedObj.MaxSpikeThreshold)
+            if($minMaxAvgResults.Max -ge $counterPassedObj.MaxThreshold)
             {
-                $details = "Met max spike threshold. Current max spike is '{0}' which is above the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Max, $counterPassedObj.MaxSpikeThreshold, $counterName
+                $details = "Met max spike threshold. Current max spike is '{0}' which is above the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Max, $counterPassedObj.MaxThreshold, $counterName
                 $thresholdType = "GreaterThanMax"
                 $thresholdValue = $minMaxAvgResults.Max
                 $thresholdMet = $true 
@@ -252,9 +244,9 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
         }
         elseif($counterPassedObj.ThresholdType -eq "LessThan")
         {
-            if($minMaxAvgResults.Min -le $counterPassedObj.MinDipThreshold)
+            if($minMaxAvgResults.Min -le $counterPassedObj.MaxThreshold)
             {
-                $details = "Met min dip threshold. Current min dip is '{0}' which is below the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Min, $counterPassedObj.MinDipThreshold, $counterName
+                $details = "Met min dip threshold. Current min dip is '{0}' which is below the threshold '{1}'. Counter: '{2}'" -f $minMaxAvgResults.Min, $counterPassedObj.MaxThreshold, $counterName
                 $thresholdType = "LessThanMin"
                 $thresholdValue = $minMaxAvgResults.Min
                 $thresholdMet = $true 
