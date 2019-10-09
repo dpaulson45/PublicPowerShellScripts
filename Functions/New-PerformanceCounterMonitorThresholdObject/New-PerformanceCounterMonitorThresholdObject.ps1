@@ -267,12 +267,12 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetMonitorResult
             $this.ThresholdMetObjectDetails.Details = $details 
             $this.ThresholdMetObjectDetails.Type = $thresholdType
             $this.WriteHostWriter($details)
-            return [PerfCounterMonitor.StatusCode]::ThresholdMet
+            return [PerformanceCounterMonitorThreshold.StatusCode]::ThresholdMet
         }
     }
     $this.WriteUpdate()
     Start-Sleep $this.SleepInSeconds
-    return [PerfCounterMonitor.StatusCode]::Passed
+    return [PerformanceCounterMonitorThreshold.StatusCode]::Passed
 }
 
 return $perfMonitorObject
