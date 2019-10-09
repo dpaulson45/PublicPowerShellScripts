@@ -33,7 +33,7 @@ $counters = @("LogicalDisk(*)\Avg. Disk Sec/Read","LogicalDisk(*)\Avg. Disk Sec/
 
 foreach($counter in $counters)
 {
-    $tempHash =  New-PerformanceThresholdCounters -PerformanceCounter $counter -ThresholdType "GreaterThan" -AverageThreshold 0.030 -MaxThreshold 0.100 -Servers @("ComputerA","ComputerB")
+    $tempHash =  Get-PerformanceThresholdCounters -PerformanceCounter $counter -ThresholdType "GreaterThan" -AverageThreshold 0.030 -MaxThreshold 0.100 -Servers @("ComputerA","ComputerB")
     foreach($key in $tempHash.Keys)
     {
         $performanceThresholdCounters.Add($key, $tempHash[$key])
