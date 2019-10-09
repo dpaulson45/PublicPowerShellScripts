@@ -3,7 +3,7 @@ Function Write-ScriptMethodHostWriter{
 param(
 [Parameter(Mandatory=$true)][string]$WriteString
 )
-    if($this.LoggerObject -eq $null)
+    if($this.LoggerObject -ne $null)
     {
         $this.LoggerObject.WriteHost($WriteString) 
     }
