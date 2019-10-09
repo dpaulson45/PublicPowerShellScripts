@@ -35,7 +35,13 @@ WriteVerboseWriter(string WriteString) | Used to call Write-Host. Will only disp
 Use the following sample code within your script: 
 
 ```
-$Script:Logger = New-LoggerObject -LogName "MyCustomLogger" 
+if($PSBoundParameters["Verbose"])
+{
+    $Script:VerboseEnabled = $true 
+}
+... 
+
+$Script:Logger = New-LoggerObject -LogName "MyCustomLogger" -VerboseEnabled $Script:VerboseEnabled
 #Some Code 
 $Script:Logger.WriteVerbose("Made it into this function")
 
