@@ -6,6 +6,7 @@ param(
 [int]$MaxSamples = 10,
 [int]$SleepInSeconds = 0,
 [int]$UpdateEveryXMinutes = 5,
+[bool]$IncludeDateTimeOnUpdate = $true,
 [object]$LoggerObject,
 [scriptblock]$HostFunctionCaller,
 [scriptblock]$VerboseFunctionCaller
@@ -25,7 +26,7 @@ This works remotely as well
             [string]ThresholdType - GreaterThan/LessThan
 #>
 
-#Function Version 1.6
+#Function Version 1.7
 if($SampleInterval -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SampleInterval. Provide a value greater than 1."
@@ -117,6 +118,7 @@ $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "SleepInSeconds" 
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "Counters" -Value (Get-Counters)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" -Value ([DateTime]::Now)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
+$perfMonitorObject | Add-Member -MemberType NoteProperty -Name "IncludeDateTimeOnUpdate" $IncludeDateTimeOnUpdate
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetDetails" -Value ([string]::Empty)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "ThresholdMetObjectDetails" -Value (Get-ThresholdMetObjectDetails)
 $perfMonitorObject | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
@@ -202,7 +204,15 @@ $perfMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteUpdate" -Va
 
     if([DateTime]::Now -gt $this.NextUpdateTime)
     {
-        $this.WriteHostWriter("[{0}] : Everything is passing checks thus far..." -f ([DateTime]$dt = [DateTime]::Now))
+        [DateTime]$dt = [DateTime]::Now
+        if($this.IncludeDateTimeOnUpdate)
+        {
+            $this.WriteHostWriter("[{0}] : Everything is passing checks thus far..." -f $dt)
+        }
+        else 
+        {
+            $this.WriteHostWriter("Everything is passing checks thus far...")
+        }
         $this.NextUpdateTime = $dt.AddMinutes($this.UpdateMinuteInterval)
     }
 }
