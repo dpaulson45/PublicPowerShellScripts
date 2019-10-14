@@ -39,6 +39,10 @@ if($PSBoundParameters["Verbose"])
 {
     $Script:VerboseEnabled = $true 
 }
+else
+{
+    $Script:VerboseEnabled = $false
+}
 ... 
 
 $Script:Logger = New-LoggerObject -LogName "MyCustomLogger" -VerboseEnabled $Script:VerboseEnabled
