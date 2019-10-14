@@ -153,7 +153,7 @@ if($VerboseFunctionCaller -ne $null)
     $procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "VerboseFunctionCaller" -Value $VerboseFunctionCaller
 }
 
-$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "ValidateProcessOnServer" -Value {
+$procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "ValidateProcessOnServers" -Value {
     if($this.UsingProcessIDToServer)
     {
         $processIdToServer = $this.ProcessIDToServer
@@ -193,7 +193,7 @@ $procdumpManagerObject | Add-Member -MemberType ScriptMethod -Name "DumpOnServer
     [string]$Server 
     )
     if([string]::IsNullOrEmpty($Server) -or 
-        (!($this.Servers.Contains($Server))))
+        (!($this.Servers.ToLower().Contains($Server.ToLower()))))
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Server parameter"
     }

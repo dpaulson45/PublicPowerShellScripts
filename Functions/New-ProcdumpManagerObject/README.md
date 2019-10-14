@@ -27,7 +27,7 @@ VerboseFunctionCaller | A script block that you can pass on object creation to a
 
 Method | Description
 -------|------------
-ValidateProcessOnServer() | Verifies that the Process Name or PID actually exists on all the Servers. It is recommended to run this after object creation and if you use PID, to use this prior to executing the dump action. 
+ValidateProcessOnServers() | Verifies that the Process Name or PID actually exists on all the Servers. It is recommended to run this after object creation and if you use PID, to use this prior to executing the dump action. 
 DumpOnServer(String ServerName) | Execute the dump on the Server that you pass to this method. It will create and execute the dump based off the parameters that you provided to it. 
 
 # Properties 
