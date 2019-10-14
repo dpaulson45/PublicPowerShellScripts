@@ -11,7 +11,7 @@ param(
 [Parameter(Mandatory=$false)][string]$CustomTestMessageSubject = "Script Mail Message Object Test",
 [Parameter(Mandatory=$false)][string]$CustomTestMessageBody = "Test Worked!"
 )
-#Function Version 1.2
+#Function Version 1.3
 Add-Type -TypeDefinition @"
     namespace MailMessage
     {
@@ -41,10 +41,10 @@ $params = @{
     Subject = $CustomTestMessageSubject
     Body = $CustomTestMessageBody
 }
-[bool]$passedCreds = $false 
-if([pscredential]::Empty -ne $Credentials -and $Credentials -ne $null)
+
+if([PSCredential]::Empty -ne $Credentials -and 
+    $Credentials -ne $null)
 {
-    $passedCreds = $true 
     $params.Add("Credential", $Credentials)
 }
 
@@ -69,7 +69,7 @@ else
 }
 
 
-$mailObject = New-Object -TypeName pscustomobject 
+$mailObject = New-Object -TypeName PSCustomObject 
 $mailObject | Add-Member -MemberType NoteProperty -Name "Parameters" -Value $params
 $mailObject | Add-Member -MemberType NoteProperty -Name "Exception" -Value ([string]::Empty)
 $mailObject | Add-Member -MemberType NoteProperty -Name "Success" -Value $true 
@@ -152,6 +152,28 @@ $mailObject | Add-Member -MemberType ScriptMethod -Name "UpdateMessageSubject" -
     }
     $params = $this.Parameters 
     $params["Subject"] = $MessageSubject
+}
+
+$mailObject | Add-Member -MemberType ScriptMethod -Name "UpdateMessageSmtpServer" -Value {
+    param(
+    [string]$SmtpServer
+    )
+    if([string]::IsNullOrEmpty($SmtpServer))
+    {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide SmtpServer"
+    }
+    $this.Parameters["SmtpServer"] = $SmtpServer
+}
+
+$mailObject | Add-Member -MemberType ScriptMethod -Name "GetMessageSmtpServer" -Value {
+    param(
+    [string]$SmtpServer
+    )
+    if([string]::IsNullOrEmpty($SmtpServer))
+    {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide SmtpServer"
+    }
+    return $this.Parameters["SmtpServer"]
 }
 
 $mailObject | Add-Member -MemberType ScriptMethod -Name "GetExceptionReason" -Value {
