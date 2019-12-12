@@ -24,6 +24,8 @@ param(
 [string]$ClientLDAPTracingProvider,
 [int]$ClientLDAPTracingMaxSizeMB,
 [bool]$ClientLDAPTracingStopAfterIssueDetected,
+[bool]$ClientRemoteCredentialNotNeeded,
+[PSCredential]$ClientRemoteCredentials,
 [bool]$ActiveDirectoryPerformanceDataCollectorSetEnabled,
 [array]$ActiveDirectoryPerformanceDataCollectorSetCounters,
 [int]$ActiveDirectoryPerformanceDataCollectorSetInterval,
@@ -56,11 +58,12 @@ param(
 [bool]$MinimizeIssueScriptEnabled,
 [string]$MinimizeIssueScriptPath,
 [int]$MinutesWaitDurationBetweenIssues,
+[bool]$ScriptRunOnClientSide,
 [int]$IssueCount = 3,
 [switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.1
+$scriptVersion = 0.2
 
 $display = @"
 
@@ -2188,6 +2191,11 @@ Function Import-DataCollectors {
             Servers = $ClientServers
             LoggerObject = $Script:Logger
         }
+        if(!($ClientRemoteCredentialNotNeeded) -and 
+            $ScriptRunOnClientSide)
+        {
+            #$clientProcdumpParams.Add()
+        }
         $Script:clientProcdumpManager = New-ProcdumpManagerObject @clientProcdumpParams
         $Script:Logger.WriteVerbose("Going to validate the setup of procdump.")
         if(!($Script:clientProcdumpManager.ValidateProcessOnServers()))
@@ -2208,6 +2216,11 @@ Function Import-DataCollectors {
             Servers = $ClientServers
             SaveFileDirectory = $ClientSaveAllDataPath
             LoggerObject = $Script:Logger
+        }
+        if(!($ClientRemoteCredentialNotNeeded) -and 
+            $ScriptRunOnClientSide)
+        {
+            $clientPerformanceParams.Add("RemoteCredentials", $Script:ClientRemoteCredentials)
         }
         $Script:clientPerformanceData = New-PerformanceLogmanObject @clientPerformanceParams
         $Script:clientPerformanceData | Add-Member -MemberType NoteProperty -Name "FriendlyName" -Value "Client Performance Data Collector Set"
@@ -2238,7 +2251,8 @@ Function Import-DataCollectors {
             SaveFileDirectory = $ActiveDirectorySavePath
             LoggerObject = $Script:Logger
         }
-        if(!($ActiveDirectoryRemoteCredentialNotNeeded))
+        if(!($ActiveDirectoryRemoteCredentialNotNeeded) -and 
+            (!($ScriptRunOnClientSide)))
         {
             $activeDirectoryPerformanceParams.Add("RemoteCredentials", $Script:ActiveDirectoryRemoteCredentials)
         }
@@ -2254,7 +2268,8 @@ Function Import-DataCollectors {
             SystemDataCollectorSet = $true 
             LoggerObject = $Script:Logger
         }
-        if(!($ActiveDirectoryRemoteCredentialNotNeeded))
+        if(!($ActiveDirectoryRemoteCredentialNotNeeded) -and 
+            (!($ScriptRunOnClientSide)))
         {
             $activeDirectoryDiagnosticsParams.Add("RemoteCredentials",$Script:ActiveDirectoryRemoteCredentials)
         }
