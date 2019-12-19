@@ -69,6 +69,7 @@ $loggerObject | Add-Member -MemberType NoteProperty -Name "NextFileCheckTime" -V
 $loggerObject | Add-Member -MemberType NoteProperty -Name "InstanceNumber" -Value 1
 $loggerObject | Add-Member -MemberType NoteProperty -Name "NumberOfLogsToKeep" -Value $NumberOfLogsToKeep
 $loggerObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled
+$loggerObject | Add-Member -MemberType NoteProperty -Name "PreventLogCleanup" -Value $false
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "ToLog" -Value ${Function:Write-ToLog}
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
@@ -177,6 +178,15 @@ $loggerObject | Add-Member -MemberType ScriptMethod -Name "CheckNumberOfFiles" -
             $items | Sort-Object LastWriteTime | Select -First 1 | Remove-Item -Force 
             $items = Get-ChildItem -Path $this.FileDirectory | ?{$_.Name -like $filter}
         }while($items.Count -gt $this.NumberOfLogsToKeep)
+    }
+}
+
+$loggerObject | Add-Member -MemberType ScriptMethod -Name "RemoveLatestLogFile" -Value {
+
+    if(!$this.PreventLogCleanup)
+    {
+        $item = Get-ChildItem $this.FullPath
+        Remove-Item $item -Force
     }
 }
 
