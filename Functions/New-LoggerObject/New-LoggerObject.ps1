@@ -120,6 +120,23 @@ $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerbose" -Value 
 
 }
 
+$loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteToFileOnly" -Value {
+    param(
+    [string]$LoggingString
+    )
+    if([string]::IsNullOrWhiteSpace($LoggingString))
+    {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
+    }
+
+    if($this.EnableDateTime)
+    {
+        $LoggingString = "[{0}] : {1}" -f [System.DateTime]::Now, $LoggingString
+    }
+    $this.ToLog($LoggingString, $this.FullPath)
+    $this.LogUpKeep()
+}
+
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "UpdateFileLocation" -Value{
 
     if($this.FullPath -eq $null)
