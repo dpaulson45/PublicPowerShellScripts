@@ -4,39 +4,15 @@ param(
 [Parameter(Mandatory=$true)][string]$Folder,
 [Parameter(Mandatory=$false)][bool]$IncludeMonthDay = $false,
 [Parameter(Mandatory=$false)][bool]$IncludeDisplayZipping = $true,
-[Parameter(Mandatory=$false)][bool]$ReturnCompressedLocation = $false,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
+[Parameter(Mandatory=$false)][bool]$ReturnCompressedLocation = $false
 )
 
-#Function Version 1.2
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($VerboseFunctionCaller -eq $null)
-    {
-        Write-Verbose $WriteString
-    }
-    else 
-    {
-        &$VerboseFunctionCaller $WriteString
-    }
-}
-
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        &$HostFunctionCaller $WriteString    
-    }
-}
+#Function Version 1.3
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
+#>
 
 Function Get-DirectorySize {
 param(
@@ -62,22 +38,16 @@ param(
 }
 Function Enable-IOCompression
 {
-    $oldErrorAction = $ErrorActionPreference
-    $ErrorActionPreference = "Stop"
     $successful = $true 
     Write-VerboseWriter("Calling: Enable-IOCompression")
     try 
     {
-        Add-Type -AssemblyName System.IO.Compression.Filesystem 
+        Add-Type -AssemblyName System.IO.Compression.Filesystem -ErrorAction Stop
     }
     catch 
     {
         Write-HostWriter("Failed to load .NET Compression assembly. Unable to compress up the data.")
         $successful = $false 
-    }
-    finally 
-    {
-        $ErrorActionPreference = $oldErrorAction
     }
     Write-VerboseWriter("Returned: [bool]{0}" -f $successful)
     return $successful
@@ -153,17 +123,12 @@ param(
     Write-VerboseWriter("Returned: [string]zipFolder {0}" -f $zipFolder)
     return $zipFolder
 }
-$passedVerboseFunctionCaller = $false
-$passedHostFunctionCaller = $false
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
-if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
+
 
 Write-VerboseWriter("Calling: Compress-Folder")
-Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping: {1} | [bool]ReturnCompressedLocation: {2} | [scriptblock]VerboseFunctionCaller: {3} | [scriptblock]HostFunctionCaller: {4}" -f $Folder, 
+Write-VerboseWriter("Passed - [string]Folder: {0} | [bool]IncludeDisplayZipping: {1} | [bool]ReturnCompressedLocation: {2}" -f $Folder, 
 $IncludeDisplayZipping,
-$ReturnCompressedLocation,
-$passedVerboseFunctionCaller,
-$passedHostFunctionCaller)
+$ReturnCompressedLocation)
 
 $compressedLocation = [string]::Empty
 if(Test-Path $Folder)
