@@ -3,30 +3,17 @@ Function Enter-YesNoLoopAction {
 param(
 [Parameter(Mandatory=$true)][string]$Question,
 [Parameter(Mandatory=$true)][scriptblock]$YesAction,
-[Parameter(Mandatory=$true)][scriptblock]$NoAction,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
+[Parameter(Mandatory=$true)][scriptblock]$NoAction
 )
 
-#Function Version 1.1
-Function Write-VerboseWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($VerboseFunctionCaller -eq $null)
-        {
-            Write-Verbose $WriteString
-        }
-        else 
-        {
-            &$VerboseFunctionCaller $WriteString
-        }
-    }
-    
-$passedVerboseFunctionCaller = $false
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
+#Function Version 1.2
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+#>
+
 Write-VerboseWriter("Calling: Enter-YesNoLoopAction")
-Write-VerboseWriter("Passed: [string]Question: {0} | [bool]VerboseFunctionCaller: {1}" -f $Question, 
-$passedVerboseFunctionCaller)
+Write-VerboseWriter("Passed: [string]Question: {0}" -f $Question)
 
 do{
     $answer = Read-Host ("{0} ('y' or 'n')" -f $Question)
