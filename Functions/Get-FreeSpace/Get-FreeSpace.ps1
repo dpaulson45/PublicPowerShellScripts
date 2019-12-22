@@ -1,48 +1,18 @@
 Function Get-FreeSpace {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$true)][ValidateScript({$_.ToString().EndsWith("\")})][string]$FilePath,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
+[Parameter(Mandatory=$true)][ValidateScript({$_.ToString().EndsWith("\")})][string]$FilePath
 )
 
+#Function Version 1.2
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
+#>
 
-#Function Version 1.1
-Function Write-VerboseWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($VerboseFunctionCaller -eq $null)
-        {
-            Write-Verbose $WriteString
-        }
-        else 
-        {
-            &$VerboseFunctionCaller $WriteString
-        }
-    }
-    
-    Function Write-HostWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($HostFunctionCaller -eq $null)
-        {
-            Write-Host $WriteString
-        }
-        else
-        {
-            &$HostFunctionCaller $WriteString    
-        }
-    }
-$passedVerboseFunctionCaller = $false
-$passedHostFunctionCaller = $false
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
-if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 Write-VerboseWriter("Calling: Get-FreeSpace")
-Write-VerboseWriter("Passed: [string]FilePath: {0} | [scriptblock]VerboseFunctionCaller: {1} | [scriptblock]HostFunctionCaller: {2}" -f $FilePath,
-$passedVerboseFunctionCaller,
-$passedHostFunctionCaller)
+Write-VerboseWriter("Passed: [string]FilePath: {0}" -f $FilePath)
 
 Function Update-TestPath {
 param(
