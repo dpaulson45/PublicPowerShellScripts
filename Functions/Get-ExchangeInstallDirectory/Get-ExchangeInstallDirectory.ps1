@@ -1,76 +1,35 @@
 Function Get-ExchangeInstallDirectory {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$false)][bool]$InvokeCommandReturnWriteArray,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
+[Parameter(Mandatory=$false)][bool]$InvokeCommandReturnWriteArray
 )
 
-#Function Version 1.1
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($InvokeCommandReturnWriteArray)
-    {
-        $hashTable = @{"Verbose"=("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString)}
-        Set-Variable stringArray -Value ($stringArray += $hashTable) -Scope 1 
-    }
-    elseif($VerboseFunctionCaller -eq $null)
-    {
-        Write-Verbose $WriteString
-    }
-    else 
-    {
-        &$VerboseFunctionCaller $WriteString
-    }
-}
-    
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($InvokeCommandReturnWriteArray)
-    {
-        $hashTable = @{"Host"=("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString)}
-        Set-Variable stringArray -Value ($stringArray += $hashTable) -Scope 1 
-    }
-    elseif($HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        &$HostFunctionCaller $WriteString    
-    }
-}
-    
-$passedVerboseFunctionCaller = $false
-$passedHostFunctionCaller = $false
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
-if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
+#Function Version 1.2
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
+#>
 $stringArray = @()
-Write-VerboseWriter("Calling: Get-ExchangeInstallDirectory")
-Write-VerboseWriter("Passed: [bool]InvokeCommandReturnWriteArray: {0} | [scriptblock]VerboseFunctionCaller: {1} | [scriptblock]HostFunctionCaller: {2}" -f $InvokeCommandReturnWriteArray, 
-$passedVerboseFunctionCaller, 
-$passedHostFunctionCaller)
+Write-InvokeCommandReturnVerboseWriter("Calling: Get-ExchangeInstallDirectory")
+Write-InvokeCommandReturnVerboseWriter("Passed: [bool]InvokeCommandReturnWriteArray: {0}" -f $InvokeCommandReturnWriteArray)
 
 $installDirectory = [string]::Empty
 if(Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup')
 {
-    Write-VerboseWriter("Detected v14")
+    Write-InvokeCommandReturnVerboseWriter("Detected v14")
     $installDirectory = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup).MsiInstallPath 
 }
 elseif(Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup')
 {
-    Write-VerboseWriter("Detected v15")
+    Write-InvokeCommandReturnVerboseWriter("Detected v15")
     $installDirectory = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath	
 }
 else 
 {
-    Write-HostWriter -WriteString ("Something went wrong trying to find Exchange Install path on this server: {0}" -f $env:COMPUTERNAME)  
+    Write-InvokeCommandReturnHostWriter -WriteString ("Something went wrong trying to find Exchange Install path on this server: {0}" -f $env:COMPUTERNAME)  
 }
-Write-VerboseWriter("Returning: {0}" -f $installDirectory)
+Write-InvokeCommandReturnVerboseWriter("Returning: {0}" -f $installDirectory)
 if($InvokeCommandReturnWriteArray)
 {
     $hashTable = @{"ReturnObject"=$installDirectory}
