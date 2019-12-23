@@ -5,11 +5,12 @@ param(
 [Parameter(Mandatory=$false)][bool]$LoadExchangeVariables = $true,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.4
+#Function Version 1.5
 <#
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-ExchangeInstallDirectory/Get-ExchangeInstallDirectory.ps1
 #>
 
 $passed = $false 
@@ -68,21 +69,13 @@ if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or
         if($LoadExchangeVariables -and 
             $passed)
         {
-            if($exinstall -eq $null -or $exbin -eq $null)
+            if($ExInstall -eq $null -or $ExBin -eq $null)
             {
-                if(Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup')
-                {
-                    $Global:exinstall = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup).MsiInstallPath	
-                }
-                else
-                {
-                    $Global:exinstall = (Get-ItemProperty HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup).MsiInstallPath	
-                }
+                $Global:ExInstall = Get-ExchangeInstallDirectory 
+                $Global:ExBin = $Global:ExInstall + "\Bin"
 
-                $Global:exbin = $Global:exinstall + "\Bin"
-
-                Write-VerboseWriter("Set exinstall: {0}" -f $Global:exinstall)
-                Write-VerboseWriter("Set exbin: {0}" -f $Global:exbin)
+                Write-VerboseWriter("Set ExInstall: {0}" -f $Global:ExInstall)
+                Write-VerboseWriter("Set ExBin: {0}" -f $Global:ExBin)
             }
         }
     }
