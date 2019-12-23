@@ -7,50 +7,20 @@ param(
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJob = $true,
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInVerboseFunction, 
 [Parameter(Mandatory=$false)][bool]$DisplayReceiveJobInCorrectFunction,
-[Parameter(Mandatory=$false)][bool]$NeedReturnData = $false,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
+[Parameter(Mandatory=$false)][bool]$NeedReturnData = $false
 )
 
+#Function Version 1.5
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
+#>
 <#
     [array]ServersWithArguments
         [string]ServerName
         [object]ArgumentList #customized for your scriptblock
 #>
-
-#Function Version 1.4
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($VerboseFunctionCaller -eq $null)
-    {
-        Write-Verbose $WriteString
-    }
-    else 
-    {
-        &$VerboseFunctionCaller $WriteString
-    }
-}
-
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        &$HostFunctionCaller $WriteString    
-    }
-}
-
-$passedVerboseFunctionCaller = $false
-$passedHostFunctionCaller = $false
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
-if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
 
 Function Write-ReceiveJobData {
 param(
@@ -161,12 +131,10 @@ Function Wait-JobsCompleted {
 
 [System.Diagnostics.Stopwatch]$timerMain = [System.Diagnostics.Stopwatch]::StartNew()
 Write-VerboseWriter("Calling Start-JobManager")
-Write-VerboseWriter("Passed: [bool]DisplayReceiveJob: {0} | [string]JobBatchName: {1} | [bool]DisplayReceiveJobInVerboseFunction: {2} | [bool]NeedReturnData:{3} | [scriptblock]VerboseFunctionCaller: {4} | [scriptblock]HostFunctionCaller: {5}" -f $DisplayReceiveJob,
+Write-VerboseWriter("Passed: [bool]DisplayReceiveJob: {0} | [string]JobBatchName: {1} | [bool]DisplayReceiveJobInVerboseFunction: {2} | [bool]NeedReturnData:{3}" -f $DisplayReceiveJob,
 $JobBatchName,
 $DisplayReceiveJobInVerboseFunction,
-$NeedReturnData,
-$passedVerboseFunctionCaller,
-$passedHostFunctionCaller)
+$NeedReturnData)
 
 Start-Jobs
 $data = Wait-JobsCompleted
