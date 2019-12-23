@@ -1,54 +1,18 @@
 Function New-Folder {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$false)][string]$NewFolder,
+[Alias("NewFolder")]
 [Parameter(Mandatory=$false)][array]$NewFolders,
 [Parameter(Mandatory=$false)][bool]$IncludeDisplayCreate,
-[Parameter(Mandatory=$false)][bool]$InvokeCommandReturnWriteArray,
-[Parameter(Mandatory=$false,Position=1)][object]$PassedParametersObject,
-[Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller,
-[Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller
+[Parameter(Mandatory=$false,Position=1)][object]$PassedParametersObject
 )
 
-#Function Version 1.3
-Function Write-VerboseWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($InvokeCommandReturnWriteArray)
-        {
-            $hashTable = @{"Verbose"=("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString)}
-            Set-Variable stringArray -Value ($stringArray += $hashTable) -Scope 1 
-        }
-        elseif($VerboseFunctionCaller -eq $null)
-        {
-            Write-Verbose $WriteString
-        }
-        else 
-        {
-            &$VerboseFunctionCaller $WriteString
-        }
-    }
-    
-    Function Write-HostWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        if($InvokeCommandReturnWriteArray)
-        {
-            $hashTable = @{"Host"=("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString)}
-            Set-Variable stringArray -Value ($stringArray += $hashTable) -Scope 1 
-        }
-        elseif($HostFunctionCaller -eq $null)
-        {
-            Write-Host $WriteString
-        }
-        else
-        {
-            &$HostFunctionCaller $WriteString    
-        }
-    }
-
+#Function Version 1.4
+<#
+Required Functions:
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
+#>
 Function New-Directory {
 param(
 [Parameter(Mandatory=$false)][string]$NewFolder
@@ -57,7 +21,7 @@ param(
     {
         if($IncludeDisplayCreate -or $InvokeCommandReturnWriteArray)
         {
-            Write-HostWriter("Creating Directory: {0}" -f $NewFolder)
+            Write-InvokeCommandReturnHostWriter -WriteString ("Creating Directory: {0}" -f $NewFolder) -ScopeLevel 2
         }
         [System.IO.Directory]::CreateDirectory($NewFolder) | Out-Null
     }
@@ -65,56 +29,39 @@ param(
     {
         if($IncludeDisplayCreate -or $InvokeCommandReturnWriteArray)
         {
-            Write-HostWriter("Directory {0} is already created!" -f $NewFolder)
+            Write-InvokeCommandReturnHostWriter -WriteString ("Directory {0} is already created!" -f $NewFolder) -ScopeLevel 2
         }
     }
 }
-$passedVerboseFunctionCaller = $false
-$passedHostFunctionCaller = $false
-$passedPassedParametersObject = $false
-$passedMultipleFolders = $false 
-if($VerboseFunctionCaller -ne $null){$passedVerboseFunctionCaller = $true}
-if($HostFunctionCaller -ne $null){$passedHostFunctionCaller = $true}
-if($PassedParametersObject -ne $null){$passedPassedParametersObject = $true}
+
 $stringArray = @() 
 if($PassedParametersObject -ne $null)
 {
-    if($PassedParametersObject.NewFolder -ne $null)
-    {
-        $NewFolder = $PassedParametersObject.NewFolder 
-    }
     if($PassedParametersObject.NewFolders -ne $null)
     {
         $NewFolders = $PassedParametersObject.NewFolders
     }
+    else 
+    {
+        $NewFolders = $PassedParametersObject
+    }
     $InvokeCommandReturnWriteArray = $true 
 }
-if($NewFolders -ne $null){$passedMultipleFolders = $true}
-Write-VerboseWriter("Calling: New-Folder")
-Write-VerboseWriter("Passed: [string]NewFolder: {0} | [bool]IncludeDisplayCreate: {1} | [bool]InvokeCommandReturnWriteArray: {2} | [bool]PassedMultipleFolders: {3} | [object]PassedParametersObject: {4} | [scriptblock]VerboseFunctionCaller: {5} | [scriptblock]HostFunctionCaller: {6}" -f $NewFolder,
-$IncludeDisplayCreate,
-$InvokeCommandReturnWriteArray,
-$passedMultipleFolders,
-$passedPassedParametersObject,
-$passedVerboseFunctionCaller,
-$passedHostFunctionCaller)
-
-if($NewFolder -ne $null -and $NewFolders -eq $null)
+if($NewFolders.Count -gt 1)
 {
-    Write-VerboseWriter("Creating a single folder")
-    New-Directory -NewFolder $NewFolder 
-}
-elseif($NewFolders -ne $null)
-{
-    Write-VerboseWriter("Creating multiple folders")
-    foreach($newFolder in $NewFolders)
-    {
-        New-Directory -NewFolder $newFolder 
-    }
+    $verboseDisplayNewFolders = "Multiple ('{0}') Folders Passed" -f $NewFolders.Count
 }
 else 
 {
-    Write-HostWriter("Failed to provide valid options to create a folder.")
+    $verboseDisplayNewFolders = $NewFolders[0]
+}
+Write-InvokeCommandReturnVerboseWriter("Calling: New-Folder")
+Write-InvokeCommandReturnVerboseWriter("Passed: [string]NewFolders: {0} | [bool]IncludeDisplayCreate: {1}" -f $verboseDisplayNewFolders,
+$IncludeDisplayCreate)
+
+foreach($newFolder in $NewFolders)
+{
+    New-Directory -NewFolder $newFolder
 }
 
 if($InvokeCommandReturnWriteArray)
