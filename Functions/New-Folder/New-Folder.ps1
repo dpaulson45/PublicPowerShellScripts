@@ -1,4 +1,4 @@
-Function Create-Folder {
+Function New-Folder {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$NewFolder,
@@ -49,7 +49,7 @@ Function Write-VerboseWriter {
         }
     }
 
-Function New-Folder {
+Function New-Directory {
 param(
 [Parameter(Mandatory=$false)][string]$NewFolder
 )
@@ -90,7 +90,7 @@ if($PassedParametersObject -ne $null)
     $InvokeCommandReturnWriteArray = $true 
 }
 if($NewFolders -ne $null){$passedMultipleFolders = $true}
-Write-VerboseWriter("Calling: Create-Folder")
+Write-VerboseWriter("Calling: New-Folder")
 Write-VerboseWriter("Passed: [string]NewFolder: {0} | [bool]IncludeDisplayCreate: {1} | [bool]InvokeCommandReturnWriteArray: {2} | [bool]PassedMultipleFolders: {3} | [object]PassedParametersObject: {4} | [scriptblock]VerboseFunctionCaller: {5} | [scriptblock]HostFunctionCaller: {6}" -f $NewFolder,
 $IncludeDisplayCreate,
 $InvokeCommandReturnWriteArray,
@@ -102,14 +102,14 @@ $passedHostFunctionCaller)
 if($NewFolder -ne $null -and $NewFolders -eq $null)
 {
     Write-VerboseWriter("Creating a single folder")
-    New-Folder -NewFolder $NewFolder 
+    New-Directory -NewFolder $NewFolder 
 }
 elseif($NewFolders -ne $null)
 {
     Write-VerboseWriter("Creating multiple folders")
     foreach($newFolder in $NewFolders)
     {
-        New-Folder -NewFolder $newFolder 
+        New-Directory -NewFolder $newFolder 
     }
 }
 else 
