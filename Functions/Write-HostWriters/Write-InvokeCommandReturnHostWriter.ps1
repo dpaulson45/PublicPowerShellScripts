@@ -11,6 +11,6 @@ param(
     }
     else 
     {
-        Write-HostWriter
+        Write-HostWriter $WriteString
     }
 }
