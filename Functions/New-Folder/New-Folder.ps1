@@ -7,7 +7,7 @@ param(
 [Parameter(Mandatory=$false,Position=1)][object]$PassedParametersObject
 )
 
-#Function Version 1.4
+#Function Version 1.5
 <#
 Required Functions:
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
@@ -21,7 +21,7 @@ param(
     {
         if($IncludeDisplayCreate -or $InvokeCommandReturnWriteArray)
         {
-            Write-InvokeCommandReturnHostWriter -WriteString ("Creating Directory: {0}" -f $NewFolder) -ScopeLevel 2
+            Write-InvokeCommandReturnHostWriter("Creating Directory: {0}" -f $NewFolder)
         }
         [System.IO.Directory]::CreateDirectory($NewFolder) | Out-Null
     }
@@ -29,12 +29,12 @@ param(
     {
         if($IncludeDisplayCreate -or $InvokeCommandReturnWriteArray)
         {
-            Write-InvokeCommandReturnHostWriter -WriteString ("Directory {0} is already created!" -f $NewFolder) -ScopeLevel 2
+            Write-InvokeCommandReturnHostWriter("Directory {0} is already created!" -f $NewFolder)
         }
     }
 }
 
-$stringArray = @() 
+$Script:stringArray = @() 
 if($PassedParametersObject -ne $null)
 {
     if($PassedParametersObject.NewFolders -ne $null)
@@ -66,6 +66,6 @@ foreach($newFolder in $NewFolders)
 
 if($InvokeCommandReturnWriteArray)
 {
-    return $stringArray
+    return $Script:stringArray
 }
 }
