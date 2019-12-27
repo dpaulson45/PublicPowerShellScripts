@@ -1,14 +1,14 @@
 Function Save-DataToFile {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$true)][object]$DataIn,
+[Parameter(Mandatory=$false)][object]$DataIn,
 [Parameter(Mandatory=$true)][string]$SaveToLocation,
 [Parameter(Mandatory=$false)][bool]$FormatList = $true,
 [Parameter(Mandatory=$false)][bool]$SaveTextFile = $true,
 [Parameter(Mandatory=$false)][bool]$SaveXMLFile = $true
 )
 
-#Function Version 1.2
+#Function Version 1.3
 <#
 Required Functions:
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -23,7 +23,8 @@ $SaveXMLFile)
 $xmlSaveLocation = "{0}.xml" -f $SaveToLocation
 $txtSaveLocation = "{0}.txt" -f $SaveToLocation
 
-if($DataIn -ne [string]::Empty)
+if($DataIn -ne [string]::Empty -and 
+    $DataIn -ne $null)
 {
     if($SaveXMLFile)
     {
