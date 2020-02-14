@@ -13,7 +13,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.1
+#Function Version 1.2
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
@@ -28,7 +28,7 @@ Required Functions:
 
 Function Write-ToLog {
 param(
-[string]$WriteString,
+[object]$WriteString,
 [string]$LogLocation
 )
     $WriteString | Out-File ($LogLocation) -Append
@@ -85,9 +85,9 @@ if($VerboseFunctionCaller -ne $null)
 
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteHost" -Value {
     param(
-    [string]$LoggingString
+    [object]$LoggingString
     )
-    if([string]::IsNullOrWhiteSpace($LoggingString))
+    if($LoggingString -eq $null)
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
     }
@@ -104,9 +104,9 @@ $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteHost" -Value {
 
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerbose" -Value {
     param(
-    [string]$LoggingString
+    [object]$LoggingString
     )
-    if([string]::IsNullOrWhiteSpace($LoggingString))
+    if($LoggingString -eq $null)
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
     }
@@ -123,9 +123,9 @@ $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteVerbose" -Value 
 
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "WriteToFileOnly" -Value {
     param(
-    [string]$LoggingString
+    [object]$LoggingString
     )
-    if([string]::IsNullOrWhiteSpace($LoggingString))
+    if($LoggingString -eq $null)
     {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
     }
