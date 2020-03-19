@@ -26,39 +26,11 @@ Add-Type -TypeDefinition @"
     }
 "@ 
 
-########################
-#
-# Write Functions 
-#
-########################
-
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-    
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 
 ########################
 #
