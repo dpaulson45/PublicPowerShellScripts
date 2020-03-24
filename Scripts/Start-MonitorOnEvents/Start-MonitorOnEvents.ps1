@@ -22,6 +22,7 @@ param(
 [Parameter(Mandatory=$false)][array]$ActiveDatabaseGUIDs,
 [Parameter(Mandatory=$false)][string]$EventLogName = "Application",
 [Parameter(Mandatory=$false)][int]$EventID = 2080,
+[Parameter(Mandatory=$false)][int]$EventLevel = -1,
 [Parameter(Mandatory=$false)][string]$EventTaskDisplayNameFilter,
 [Parameter(Mandatory=$false)][string]$EventMessageFilter,
 [Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $false,
@@ -1929,7 +1930,7 @@ Function Create-DataCollectionObjects {
     }
     else 
     {
-        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -Servers $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter 
+        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -Servers $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter -Level $EventLevel
     }
 
     if($EnableExperfwizManager)
