@@ -198,15 +198,21 @@ Function New-MDBFailureItemTagMonitor {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][array]$TagIDs = @(38,39),
-[Parameter(Mandatory=$false)][array]$MonitorOnlyDBs,
-[Parameter(Mandatory=$false)][bool]$WriteVerboseData,
+[Parameter(Mandatory=$false)][array]$DatabaseGUIDsToMonitor,
+[Parameter(Mandatory=$false)][bool]$VerboseEnabled,
 [Parameter(Mandatory=$false)][object]$LoggerObject,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.4
-#[System.Collections.Generic.List[System.Object]]$list = New-Object -TypeName System.Collections.Generic.List[System.Object]
+#Function Version 1.6
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-EventLogMonitorObject/New-EventLogMonitorObject.ps1
+#>
+#TODO: Add GetEventData() Method 
 Add-Type -TypeDefinition @"
     namespace MDBFailureItemTag
     {
@@ -219,92 +225,35 @@ Add-Type -TypeDefinition @"
     }
 "@ 
 
-########################
-#
-# Write Functions 
-#
-########################
-
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.LoggerObject -ne $null)
-    {
-        $this.LoggerObject.WriteVerbose($WriteString)
-    }
-    elseif($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-    
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.LoggerObject -ne $null)
-    {
-        $this.LoggerObject.WriteHost($WriteString)
-    }
-    elseif($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
-
-########################
-#
-# New-MDBFailureItemTagMonitor -- Template Functions
-#
-########################
-
-# Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-EventLogMonitorObject/New-EventLogMonitorObject.ps1
-#Removed this as we should be able to call New-EventLogMonitorObject from the main part of the script as it isn't nested. This reduces the amount of code in the script. 
-
-########################
-#
-# End New-MDBFailureItemTagMonitor -- Template Functions
-#
-########################
-
-
 ########## Parameter Binding Exceptions ##############
 # throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
 if($TagIDs -eq $null -and $TagIDs.Count -gt 0)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid TagIDs." 
 }
-if($MonitorOnlyDBs -ne $null -and $MonitorOnlyDBs.Count -gt 0)
+if($DatabaseGUIDsToMonitor -ne $null -and $DatabaseGUIDsToMonitor.Count -gt 0)
 {
-    $MonitorOnlyDBsEnable = $true 
+    $FilterByDBGuidEnabled = $true
+    $DatabaseGUIDsToMonitor = $DatabaseGUIDsToMonitor.ToUpper()
 }
 else 
 {
-    $MonitorOnlyDBsEnable = $false 
+    $FilterByDBGuidEnabled = $false 
 }
 
-$monitorEvents = New-EventLogMonitorObject -LogName "Microsoft-Exchange-MailboxDatabaseFailureItems/Operational" -EventID 1 -ServerList @($env:COMPUTERNAME) -HostFunctionCaller $HostFunctionCaller -VerboseFunctionCaller $VerboseFunctionCaller
+$monitorEvents = New-EventLogMonitorObject -LogName "Microsoft-Exchange-MailboxDatabaseFailureItems/Operational" -EventID 1 -Servers @($env:COMPUTERNAME) -HostFunctionCaller $HostFunctionCaller -VerboseFunctionCaller $VerboseFunctionCaller -VerboseEnabled $VerboseEnabled
 $monitorEvents.UpdateStartTime();
 
-$failureItemTagMonitor = New-Object pscustomobject
+$failureItemTagMonitor = New-Object PSCustomObject
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "TagIDs" -Value $TagIDs
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorEventObject" -Value $monitorEvents 
-$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBsEnable" -Value $MonitorOnlyDBsEnable 
-$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "MonitorOnlyDBs" -Value $MonitorOnlyDBs
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "FilterByDBGuidEnabled" -Value $FilterByDBGuidEnabled 
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "DatabaseGUIDsToMonitor" -Value $DatabaseGUIDsToMonitor
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "ConditionMetDB" -Value ([string]::Empty)
-$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $WriteVerboseData
+$failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled
 $failureItemTagMonitor | Add-Member -MemberType NoteProperty -Name "LoggerObject" -Value $LoggerObject
-$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
-$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
+$failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
 
 if($HostFunctionCaller -ne $null)
 {
@@ -331,8 +280,8 @@ $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorEvent
                 $this.WriteVerboseWriter("Ignoring failure item with tag: {0}" -f $tag)
                 continue 
             }
-            if($this.MonitorOnlyDBsEnable -and 
-            (!($this.MonitorOnlyDBs.Contains($dbGUID))))
+            if($this.FilterByDBGuidEnabled -and 
+            (!($this.DatabaseGUIDsToMonitor.Contains($dbGUID))))
             {
                 $this.WriteVerboseWriter("Ignoring failure item for database: {0}" -f $dbGUID)
                 continue 
@@ -363,7 +312,6 @@ $failureItemTagMonitor | Add-Member -MemberType ScriptMethod -Name "MonitorLoop"
         }
     }
 }
-
 
 return $failureItemTagMonitor 
 }
@@ -889,17 +837,24 @@ Function New-EventLogMonitorObject {
 param(
 [Parameter(Mandatory=$false)][string]$LogName = "Application",
 [Parameter(Mandatory=$false)][int]$EventID,
+[Parameter(Mandatory=$false)][int]$Level = -1,
 [Parameter(Mandatory=$false)][string]$TaskDisplayNameFilter,
 [Parameter(Mandatory=$false)][string]$MessageFilter,
-[Parameter(Mandatory=$false)][array]$ServerList,
-[Parameter(Mandatory=$false)][int]$UpdateEveryXMinutes = 5,
+[Parameter(Mandatory=$false)][array]$Servers,
+[Parameter(Mandatory=$false)][int]$WriteUpdateMinuteInterval = 5,
 [Parameter(Mandatory=$false)][int]$SleepTime = 1,
-[Parameter(Mandatory=$false)][bool]$WriteVerboseData = $false,
+[Parameter(Mandatory=$false)][bool]$SusspendMonitorServerHostWriters = $false,
+[Parameter(Mandatory=$false)][bool]$VerboseEnabled = $false,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.3
+#Function Version 1.4
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-ScriptMethodVerboseWriter.ps1
+#>
 Add-Type -TypeDefinition @"
     namespace EventLogMonitor
     {
@@ -912,49 +867,9 @@ Add-Type -TypeDefinition @"
     }
 "@ 
 
-########################
-#
-# Write Functions 
-#
-########################
-
-Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.VerboseFunctionCaller -eq $null -and $this.WriteVerboseData)
-    {
-        Write-Host $WriteString -ForegroundColor Cyan
-    }
-    elseif($this.WriteVerboseData)
-    {
-        $this.VerboseFunctionCaller($WriteString)
-    }
-}
-    
-Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($this.HostFunctionCaller -eq $null)
-    {
-        Write-Host $WriteString
-    }
-    else
-    {
-        $this.HostFunctionCaller($WriteString)
-    }
-}
-
-########################
-#
-#   Functions
-#
-########################
-
 Function New-ServersStatusHashtable {
     $hasher = @{}
-    foreach($server in $ServerList)
+    foreach($server in $Servers)
     {
         $hasher.Add($server, ([EventLogMonitor.StatusCode]::Passed))
     }
@@ -962,7 +877,7 @@ Function New-ServersStatusHashtable {
 }
 Function New-ServersEventDataHashtable {
     $hasher = @{}
-    foreach($server in $ServerList)
+    foreach($server in $Servers)
     {
         $hasher.Add($server,([string]::Empty))
     }
@@ -970,8 +885,6 @@ Function New-ServersEventDataHashtable {
 }
 
 ########## Parameter Binding Exceptions ##############
-# throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ParameterName" 
-
 if($EventID -lt 1)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EventID. Needs to be a value greater than or equal to 1." 
@@ -980,36 +893,43 @@ if([string]::IsNullOrEmpty($LogName))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogName." 
 }
-if($ServerList -eq $null -or $ServerList.count -eq 0)
+if($Servers -eq $null -or $Servers.count -eq 0)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ServerList." 
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Servers." 
 }
-if($UpdateEveryXMinutes -lt 1)
+if($WriteUpdateMinuteInterval -lt 1)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid UpdateEveryXMinutes. Needs to be a value greater than or equal to 1." 
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid WriteUpdateMinuteInterval. Needs to be a value greater than or equal to 1." 
 }
 if($SleepTime -lt 0)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SleepTime. Needs to be a value greater than or equal to 0." 
 }
 
-
-$eventLogMonitorObject = New-Object pscustomobject 
-
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerList" -Value $ServerList
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventID" -Value $EventID
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "LogName" -Value $LogName
+$eventLogMonitorObject = New-Object PSCustomObject 
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "MessageFilter" -Value $MessageFilter
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "TaskDisplayNameFilter" -Value $TaskDisplayNameFilter
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "StartTime" -Value ([datetime]::MinValue)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateTime" -Value ([DateTime]::Now)
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $UpdateEveryXMinutes
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "UpdateMinuteInterval" -Value $WriteUpdateMinuteInterval
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "SleepTime" -Value $SleepTime
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerStatus" -Value (New-ServersStatusHashtable)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerEventData" -Value (New-ServersEventDataHashtable)
-$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $WriteVerboseData 
-$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-HostWriter}
-$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-VerboseWriter}
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "SusspendMonitorServerHostWriters" -Value $SusspendMonitorServerHostWriters
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
+$eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
+
+$filterHashTable = @{
+LogName = $LogName
+ID = $EventID
+StartTime = $StartTime
+}
+if($Level -ne -1)
+{
+    $filterHashTable.Add("Level",$Level)
+}
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "FilterHashtable" -Value $filterHashTable
 
 if($HostFunctionCaller -ne $null)
 {
@@ -1021,11 +941,10 @@ if($VerboseFunctionCaller -ne $null)
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "UpdateStartTime" -Value {
-    $this.StartTime = (Get-Date).ToString("o")
+    $this.FilterHashtable["StartTime"] = (Get-Date).ToString("o")
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteUpdate" -Value {
-    
     if([DateTime]::Now -gt $this.NextUpdateTime)
     {
         $this.WriteHostWriter(("[{0}] : Everything is passing checks thus far..." -f ([DateTime]$dt = [DateTime]::Now)))
@@ -1034,7 +953,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteUpdate"
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "ResetStatus" -Value {
-    foreach($server in $this.ServerList)
+    foreach($server in $this.Servers)
     {
         $this.ServerEventData[$server] = [string]::Empty
         $this.ServerStatus[$server] = [EventLogMonitor.StatusCode]::Passed
@@ -1046,7 +965,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "ResetStatus"
 
 $eventLogMonitorObject | Add-Member -MemberType  ScriptMethod -Name "GetConditionServers" -Value {
     $conditionServer = @() ##Needs to be array in case they don't reset the data 
-    foreach($server in $this.ServerList)
+    foreach($server in $this.Servers)
     {
         if($this.ServerStatus[$server] -eq [EventLogMonitor.StatusCode]::ConditionMet)
         {
@@ -1057,9 +976,6 @@ $eventLogMonitorObject | Add-Member -MemberType  ScriptMethod -Name "GetConditio
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData" -Value {
-    
-    $conditionServer = $this.GetConditionServers() 
-
     Function Get-StringArrayFromObjectDetails{
     param(
     [array]$Properties,
@@ -1073,6 +989,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
         return $data
     }
 
+    $conditionServer = $this.GetConditionServers() 
     $stringData = @("--Event Results--")
     foreach($server in $conditionServer)
     {
@@ -1082,7 +999,6 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetEventData
         $stringData += Get-StringArrayFromObjectDetails -Properties @("MachineName","ID","ProviderName","TaskDisplayName", "LogName", "TimeCreated", "Message") -EventData $data
         $stringData += "--End Server Event Data--"
     }
-    
     return $stringData 
 }
 
@@ -1097,12 +1013,11 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "GetRawEventD
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServers" -Value {
-
     $eventOccurred = $false 
-    foreach($server in $this.ServerList)
+    foreach($server in $this.Servers)
     {
         [System.Diagnostics.Stopwatch]$timer = [System.Diagnostics.Stopwatch]::StartNew()
-        $newEvents = Get-WinEvent -ComputerName $server -FilterHashtable @{LogName=$this.LogName;StartTime=$this.StartTime;ID=$this.EventID} -ErrorAction SilentlyContinue    
+        $newEvents = Get-WinEvent -ComputerName $server -FilterHashtable $this.FilterHashTable -ErrorAction SilentlyContinue    
         $this.WriteVerboseWriter(("Took {0} seconds to attempt to get data from server {1}" -f $timer.Elapsed.TotalSeconds, $server))
         if($newEvents -eq $null)
         {
@@ -1111,7 +1026,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServe
         }
         else 
         {
-            $this.WriteHostWriter(("Server {0} had event that we are looking for" -f $server))
+            if(!$this.SusspendMonitorServerHostWriters){ $this.WriteHostWriter(("Server {0} had event that we are looking for" -f $server))}
             if([string]::IsNullOrEmpty($this.MessageFilter) -and [string]::IsNullOrEmpty($this.TaskDisplayNameFilter))
             {
                 $this.ServerStatus[$server] = [EventLogMonitor.StatusCode]::ConditionMet
@@ -1121,7 +1036,7 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServe
             }
             else 
             {
-                $this.WriteHostWriter(("Need to filter down the results some more..."))
+                if(!$this.SusspendMonitorServerHostWriters){$this.WriteHostWriter(("Need to filter down the results some more..."))}
                 foreach($event in $newEvents)
                 {
                     $validEvent = $false 
@@ -1173,18 +1088,18 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorServe
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorLoop" -Value {
     param(
-    [int]$LoopForXMinutes = 0
+    [int]$DurationInMinutes = 0
     )
 
-    if($LoopForXMinutes -lt 0)
+    if($DurationInMinutes -lt 0)
     {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoopForXMinutes value. Needs to be a value 0 or greater. If 0 is provided, this loop will not break."
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid DurationInMinutes value. Needs to be a value 0 or greater. If 0 is provided, this loop will not break."
     }
 
     $breakLoopTime = [DateTime]::MaxValue
-    if($LoopForXMinutes -ne 0)
+    if($DurationInMinutes -ne 0)
     {
-        $breakLoopTime = ([datetime]::Now).AddMinutes($LoopForXMinutes)
+        $breakLoopTime = ([datetime]::Now).AddMinutes($DurationInMinutes)
         $this.WriteVerboseWriter("Setting break loop time for {0}" -f $breakLoopTime)
     }
     else 
@@ -1202,7 +1117,6 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorLoop"
     $this.WriteVerboseWriter("No conditions were met during this loop")
     return [EventLogMonitor.StatusCode]::Passed
 }
-
 return $eventLogMonitorObject 
 }
 # End Function New-EventLogMonitorObject
@@ -2011,11 +1925,11 @@ Function Create-DataCollectionObjects {
         {
             $dbGUIDs += $db.ToUpper() 
         }
-        $Script:eventLogMonitorObject = New-MDBFailureItemTagMonitor -TagIDs $MDBFailureItemTags -MonitorOnlyDBs $dbGUIDs
+        $Script:eventLogMonitorObject = New-MDBFailureItemTagMonitor -TagIDs $MDBFailureItemTags -DatabaseGUIDsToMonitor $dbGUIDs
     }
     else 
     {
-        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -ServerList $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter 
+        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -Servers $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter 
     }
 
     if($EnableExperfwizManager)
@@ -2040,7 +1954,6 @@ Function Main {
 
         Start-DataCollections
         $Script:eventLogMonitorObject.ResetStatus()
-        Write-Debug("hmm")
         $Script:eventLogMonitorObject.MonitorLoop()
         $Script:issueTime = [Datetime]::Now
         Write-Host("Issue detected at {0}" -f $Script:issueTime)
