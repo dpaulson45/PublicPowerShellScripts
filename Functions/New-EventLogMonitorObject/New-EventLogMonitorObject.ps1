@@ -9,13 +9,15 @@ param(
 [Parameter(Mandatory=$false)][array]$Servers,
 [Parameter(Mandatory=$false)][int]$WriteUpdateMinuteInterval = 5,
 [Parameter(Mandatory=$false)][int]$SleepTime = 1,
+[Parameter(Mandatory=$false)][int]$EventFilterStartTimeUpdateIntervalInSeconds = 30,
+[Parameter(Mandatory=$false)][bool]$EventFilterStartTimeUpdateEnabled = $false,
 [Parameter(Mandatory=$false)][bool]$SusspendMonitorServerHostWriters = $false,
 [Parameter(Mandatory=$false)][bool]$VerboseEnabled = $false,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.4
+#Function Version 1.5
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
@@ -83,6 +85,9 @@ $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerStatus
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerEventData" -Value (New-ServersEventDataHashtable)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "SusspendMonitorServerHostWriters" -Value $SusspendMonitorServerHostWriters
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventFilterStartTimeUpdateEnabled" -Value $EventFilterStartTimeUpdateEnabled
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventFilterStartTimeUpdateIntervalInSeconds" -Value $EventFilterStartTimeUpdateIntervalInSeconds
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateFilterStartTime" -Value ([DateTime]::MinValue)
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
 
@@ -107,7 +112,11 @@ if($VerboseFunctionCaller -ne $null)
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "UpdateStartTime" -Value {
-    $this.FilterHashtable["StartTime"] = (Get-Date).ToString("o")
+    param(
+    [int]$SubtractSeconds = 0
+    )
+    $this.FilterHashtable["StartTime"] = (Get-Date).AddSeconds(-$SubtractSeconds).ToString("o")
+    $this.NextUpdateFilterStartTime = (Get-Date).AddSeconds($this.EventFilterStartTimeUpdateIntervalInSeconds)
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteUpdate" -Value {
@@ -277,6 +286,11 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorLoop"
         if($this.MonitorServers() -eq [EventLogMonitor.StatusCode]::ConditionMet)
         {
             return [EventLogMonitor.StatusCode]::ConditionMet
+        }
+        if($this.EventFilterStartTimeUpdateEnabled -and 
+            [datetime]::Now -gt $this.NextUpdateFilterStartTime)
+        {
+            $this.UpdateStartTime(5)
         }
         Start-Sleep $this.SleepTime
     }
