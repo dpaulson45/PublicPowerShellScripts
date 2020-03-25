@@ -2,17 +2,17 @@ Function New-ExtraLogmanObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$LogmanName = "ExchangeLogman",
-[Parameter(Mandatory=$false)][string]$SaveName,
+[Parameter(Mandatory=$false)][string]$FileName,
 [Parameter(Mandatory=$false)][int]$EtlFileSize = 400,
 #[Parameter(Mandatory=$false)][string]$EtlCNF, # = "00:30:00", #TODO see if this is truly needed
-[Parameter(Mandatory=$false)][string]$SavePath = "C:\Traces",
+[Parameter(Mandatory=$false)][string]$FileDirectory = "C:\Traces",
 [Parameter(Mandatory=$false)][string]$Provider = "Microsoft Exchange Server 2010",
 [Parameter(Mandatory=$false)][string]$AppendVersioningToFile = "mmddhhmm",
-[Parameter(Mandatory=$false)][array]$ServerList,
+[Parameter(Mandatory=$false)][array]$Servers,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
-#Function Version 1.2
+#Function Version 1.3
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -21,9 +21,9 @@ if($EtlFileSize -lt 100 -or $EtlFileSize -gt 1000)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EtlFileSize. Use a value between 100 and 1000"
 }
-if([string]::IsNullOrEmpty($SavePath.Trim()))
+if([string]::IsNullOrEmpty($FileDirectory.Trim()))
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SavePath" 
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid FileDirectory" 
 }
 if([string]::IsNullOrEmpty($Provider.Trim()))
 {
@@ -33,17 +33,17 @@ if([string]::IsNullOrEmpty($AppendVersioningToFile.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid AppendVersioningToFile"
 }
-if($ServerList -eq $null -or $ServerList.Count -eq 0)
+if($Servers -eq $null -or $Servers.Count -eq 0)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ServerList"
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Servers"
 }
 if($ExtraTraceConfigFileContent -eq $null -or $ExtraTraceConfigFileContent.Count -eq 0)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ExtraTraceConfigFileContent"
 }
-if([string]::IsNullOrEmpty($SaveName.Trim()))
+if([string]::IsNullOrEmpty($FileName.Trim()))
 {
-    $SaveName = $LogmanName
+    $FileName = $LogmanName
 }
 
 Add-Type -TypeDefinition @"
@@ -62,16 +62,13 @@ Add-Type -TypeDefinition @"
             NotFound
         }
     }
-
 "@ 
 
-
 Function New-ServersStatusObject {
-
     $hasher = @{}
-    foreach($server in $ServerList)
+    foreach($server in $Servers)
     {
-        $statusObject = New-Object pscustomobject
+        $statusObject = New-Object PSCustomObject
         $statusObject | Add-Member -MemberType NoteProperty -Name "CreatedResults" -Value ([string]::Empty)
         $statusObject | Add-Member -MemberType NoteProperty -Name "CreatedStatusCode" -Value ([ExtraLogman.StatusCode]::None)
         $statusObject | Add-Member -MemberType NoteProperty -Name "StartedResults" -Value ([string]::Empty)
@@ -90,21 +87,19 @@ Function New-ServersStatusObject {
 }
 
 #ToDo Add ability to test each server 
-$logmanObject = New-Object pscustomobject 
-
+$logmanObject = New-Object PSCustomObject 
 $logmanObject | Add-Member -MemberType NoteProperty -Name "TraceName" -Value $LogmanName
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ETLFileSize" -Value $EtlFileSize
 $logmanObject | Add-Member -MemberType NoteProperty -Name "Provider" -Value $Provider
 $logmanObject | Add-Member -MemberType NoteProperty -Name "AppendVersion" -Value $AppendVersioningToFile
-$logmanObject | Add-Member -MemberType NoteProperty -Name "FileDirectory" -Value $SavePath
-$logmanObject | Add-Member -MemberType NoteProperty -Name "FileName" -Value $SaveName
+$logmanObject | Add-Member -MemberType NoteProperty -Name "FileDirectory" -Value $FileDirectory
+$logmanObject | Add-Member -MemberType NoteProperty -Name "FileName" -Value $FileName
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ExtraTraceConfigFileContent" -Value $ExtraTraceConfigFileContent
-$logmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $ServerList
+$logmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ServersStatus" -Value (New-ServersStatusObject)
 
 #Save out .config file on all servers
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "SaveExtraConfigToAllServers" -Value {
-
     $failureCount = 0
     Function Save-ExtraLine {
     param(
@@ -151,7 +146,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "SaveExtraConfigToAllS
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "StartLogman" -Value {
-    
     $servers = $this.Servers
     $logman = $this.TraceName
     $failureCount = 0
@@ -178,7 +172,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "StartLogman" -Value {
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman" -Value {
-
     $servers = $this.Servers
     $logman = $this.TraceName
     $failureCount = 0 
@@ -206,7 +199,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman" -Value {
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "DeleteLogman" -Value {
-
     $servers = $this.Servers 
     $logman = $this.TraceName 
     $failureCount = 0
@@ -274,7 +266,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CreateLogman" -Value 
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -Value {
-
     $servers = $this.Servers 
     $logman = $this.TraceName 
     foreach($server in $servers)
@@ -317,7 +308,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -V
     #For now, this should always return success 
     return ([ExtraLogman.StatusCode]::Success)
 }
-
 
 return $logmanObject 
 }
