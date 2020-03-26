@@ -25,6 +25,9 @@ param(
 [Parameter(Mandatory=$false)][int]$EventLevel = -1,
 [Parameter(Mandatory=$false)][string]$EventTaskDisplayNameFilter,
 [Parameter(Mandatory=$false)][string]$EventMessageFilter,
+[Parameter(Mandatory=$false)][bool]$EventSusspendMonitorServerHostWriters = $false,
+[Parameter(Mandatory=$false)][bool]$EventTimeUpdateIntervalInSeconds = 30,
+[Parameter(Mandatory=$false)][bool]$EventTimeUpdateEnabled = $false,
 [Parameter(Mandatory=$false)][bool]$EnableExtraTracing = $false,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent,
 [Parameter(Mandatory=$false)][bool]$EnableExperfwizManager = $false,
@@ -38,7 +41,7 @@ param(
 [Parameter(Mandatory=$false)][switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.7
+$scriptVersion = 0.8
 
 $display = @"
 
@@ -86,6 +89,45 @@ param(
     else
     {
         &$HostFunctionCaller $WriteString    
+    }
+}
+
+#Function Version 1.0
+Function Write-ScriptMethodVerboseWriter {
+param(
+[Parameter(Mandatory=$true)][string]$WriteString
+)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteVerbose($WriteString)
+    }
+    elseif($this.VerboseFunctionCaller -eq $null -and 
+        $this.WriteVerboseData)
+    {
+        Write-Host $WriteString -ForegroundColor Cyan 
+    }
+    elseif($this.WriteVerboseData)
+    {
+        $this.VerboseFunctionCaller($WriteString)
+    }
+}
+
+#Function Version 1.0
+Function Write-ScriptMethodHostWriter{
+param(
+[Parameter(Mandatory=$true)][string]$WriteString
+)
+    if($this.LoggerObject -ne $null)
+    {
+        $this.LoggerObject.WriteHost($WriteString) 
+    }
+    elseif($this.HostFunctionCaller -eq $null)
+    {
+        Write-Host $WriteString
+    }
+    else 
+    {
+        $this.HostFunctionCaller($WriteString)
     }
 }
 
@@ -494,17 +536,17 @@ Function New-ExtraLogmanObject {
 [CmdletBinding()]
 param(
 [Parameter(Mandatory=$false)][string]$LogmanName = "ExchangeLogman",
-[Parameter(Mandatory=$false)][string]$SaveName,
+[Parameter(Mandatory=$false)][string]$FileName,
 [Parameter(Mandatory=$false)][int]$EtlFileSize = 400,
 #[Parameter(Mandatory=$false)][string]$EtlCNF, # = "00:30:00", #TODO see if this is truly needed
-[Parameter(Mandatory=$false)][string]$SavePath = "C:\Traces",
+[Parameter(Mandatory=$false)][string]$FileDirectory = "C:\Traces",
 [Parameter(Mandatory=$false)][string]$Provider = "Microsoft Exchange Server 2010",
 [Parameter(Mandatory=$false)][string]$AppendVersioningToFile = "mmddhhmm",
-[Parameter(Mandatory=$false)][array]$ServerList,
+[Parameter(Mandatory=$false)][array]$Servers,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
 )
 
-#Function Version 1.2
+#Function Version 1.3
 if([string]::IsNullOrEmpty($LogmanName.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName" 
@@ -513,9 +555,9 @@ if($EtlFileSize -lt 100 -or $EtlFileSize -gt 1000)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid EtlFileSize. Use a value between 100 and 1000"
 }
-if([string]::IsNullOrEmpty($SavePath.Trim()))
+if([string]::IsNullOrEmpty($FileDirectory.Trim()))
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid SavePath" 
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid FileDirectory" 
 }
 if([string]::IsNullOrEmpty($Provider.Trim()))
 {
@@ -525,17 +567,17 @@ if([string]::IsNullOrEmpty($AppendVersioningToFile.Trim()))
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid AppendVersioningToFile"
 }
-if($ServerList -eq $null -or $ServerList.Count -eq 0)
+if($Servers -eq $null -or $Servers.Count -eq 0)
 {
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ServerList"
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid Servers"
 }
 if($ExtraTraceConfigFileContent -eq $null -or $ExtraTraceConfigFileContent.Count -eq 0)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid ExtraTraceConfigFileContent"
 }
-if([string]::IsNullOrEmpty($SaveName.Trim()))
+if([string]::IsNullOrEmpty($FileName.Trim()))
 {
-    $SaveName = $LogmanName
+    $FileName = $LogmanName
 }
 
 Add-Type -TypeDefinition @"
@@ -554,16 +596,13 @@ Add-Type -TypeDefinition @"
             NotFound
         }
     }
-
 "@ 
 
-
 Function New-ServersStatusObject {
-
     $hasher = @{}
-    foreach($server in $ServerList)
+    foreach($server in $Servers)
     {
-        $statusObject = New-Object pscustomobject
+        $statusObject = New-Object PSCustomObject
         $statusObject | Add-Member -MemberType NoteProperty -Name "CreatedResults" -Value ([string]::Empty)
         $statusObject | Add-Member -MemberType NoteProperty -Name "CreatedStatusCode" -Value ([ExtraLogman.StatusCode]::None)
         $statusObject | Add-Member -MemberType NoteProperty -Name "StartedResults" -Value ([string]::Empty)
@@ -582,21 +621,19 @@ Function New-ServersStatusObject {
 }
 
 #ToDo Add ability to test each server 
-$logmanObject = New-Object pscustomobject 
-
+$logmanObject = New-Object PSCustomObject 
 $logmanObject | Add-Member -MemberType NoteProperty -Name "TraceName" -Value $LogmanName
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ETLFileSize" -Value $EtlFileSize
 $logmanObject | Add-Member -MemberType NoteProperty -Name "Provider" -Value $Provider
 $logmanObject | Add-Member -MemberType NoteProperty -Name "AppendVersion" -Value $AppendVersioningToFile
-$logmanObject | Add-Member -MemberType NoteProperty -Name "FileDirectory" -Value $SavePath
-$logmanObject | Add-Member -MemberType NoteProperty -Name "FileName" -Value $SaveName
+$logmanObject | Add-Member -MemberType NoteProperty -Name "FileDirectory" -Value $FileDirectory
+$logmanObject | Add-Member -MemberType NoteProperty -Name "FileName" -Value $FileName
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ExtraTraceConfigFileContent" -Value $ExtraTraceConfigFileContent
-$logmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $ServerList
+$logmanObject | Add-Member -MemberType NoteProperty -Name "Servers" -Value $Servers
 $logmanObject | Add-Member -MemberType NoteProperty -Name "ServersStatus" -Value (New-ServersStatusObject)
 
 #Save out .config file on all servers
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "SaveExtraConfigToAllServers" -Value {
-
     $failureCount = 0
     Function Save-ExtraLine {
     param(
@@ -643,7 +680,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "SaveExtraConfigToAllS
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "StartLogman" -Value {
-    
     $servers = $this.Servers
     $logman = $this.TraceName
     $failureCount = 0
@@ -670,7 +706,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "StartLogman" -Value {
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman" -Value {
-
     $servers = $this.Servers
     $logman = $this.TraceName
     $failureCount = 0 
@@ -698,7 +733,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "StopLogman" -Value {
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "DeleteLogman" -Value {
-
     $servers = $this.Servers 
     $logman = $this.TraceName 
     $failureCount = 0
@@ -766,7 +800,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CreateLogman" -Value 
 }
 
 $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -Value {
-
     $servers = $this.Servers 
     $logman = $this.TraceName 
     foreach($server in $servers)
@@ -810,7 +843,6 @@ $logmanObject | Add-Member -MemberType ScriptMethod -Name "CheckLogmanStatus" -V
     return ([ExtraLogman.StatusCode]::Success)
 }
 
-
 return $logmanObject 
 }
 # End Function New-ExtraLogmanObject
@@ -844,13 +876,15 @@ param(
 [Parameter(Mandatory=$false)][array]$Servers,
 [Parameter(Mandatory=$false)][int]$WriteUpdateMinuteInterval = 5,
 [Parameter(Mandatory=$false)][int]$SleepTime = 1,
+[Parameter(Mandatory=$false)][int]$EventFilterStartTimeUpdateIntervalInSeconds = 30,
+[Parameter(Mandatory=$false)][bool]$EventFilterStartTimeUpdateEnabled = $false,
 [Parameter(Mandatory=$false)][bool]$SusspendMonitorServerHostWriters = $false,
 [Parameter(Mandatory=$false)][bool]$VerboseEnabled = $false,
 [Parameter(Mandatory=$false)][scriptblock]$HostFunctionCaller,
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.4
+#Function Version 1.5
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
@@ -918,6 +952,9 @@ $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerStatus
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "ServerEventData" -Value (New-ServersEventDataHashtable)
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "WriteVerboseData" -Value $VerboseEnabled 
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "SusspendMonitorServerHostWriters" -Value $SusspendMonitorServerHostWriters
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventFilterStartTimeUpdateEnabled" -Value $EventFilterStartTimeUpdateEnabled
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "EventFilterStartTimeUpdateIntervalInSeconds" -Value $EventFilterStartTimeUpdateIntervalInSeconds
+$eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "NextUpdateFilterStartTime" -Value ([DateTime]::MinValue)
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteHostWriter" -Value ${Function:Write-ScriptMethodHostWriter}
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteVerboseWriter" -Value ${Function:Write-ScriptMethodVerboseWriter}
 
@@ -942,7 +979,11 @@ if($VerboseFunctionCaller -ne $null)
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "UpdateStartTime" -Value {
-    $this.FilterHashtable["StartTime"] = (Get-Date).ToString("o")
+    param(
+    [int]$SubtractSeconds = 0
+    )
+    $this.FilterHashtable["StartTime"] = (Get-Date).AddSeconds(-$SubtractSeconds).ToString("o")
+    $this.NextUpdateFilterStartTime = (Get-Date).AddSeconds($this.EventFilterStartTimeUpdateIntervalInSeconds)
 }
 
 $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "WriteUpdate" -Value {
@@ -1112,6 +1153,11 @@ $eventLogMonitorObject | Add-Member -MemberType ScriptMethod -Name "MonitorLoop"
         if($this.MonitorServers() -eq [EventLogMonitor.StatusCode]::ConditionMet)
         {
             return [EventLogMonitor.StatusCode]::ConditionMet
+        }
+        if($this.EventFilterStartTimeUpdateEnabled -and 
+            [datetime]::Now -gt $this.NextUpdateFilterStartTime)
+        {
+            $this.UpdateStartTime(5)
         }
         Start-Sleep $this.SleepTime
     }
@@ -1894,7 +1940,7 @@ Function Create-DataCollectionObjects {
     }
     if($EnableExtraTracing)
     {
-        $Script:extraObject = New-ExtraLogmanObject -SavePath $SaveAllDataPath -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent -ServerList $Servers
+        $Script:extraObject = New-ExtraLogmanObject -FileDirectory $SaveAllDataPath -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent -Servers $Servers
         if($Script:extraObject.SaveExtraConfigToAllServers() -ne [ExtraLogman.StatusCode]::Success)
         {
             if($EnableEmailNotification)
@@ -1930,7 +1976,7 @@ Function Create-DataCollectionObjects {
     }
     else 
     {
-        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -Servers $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter -Level $EventLevel
+        $Script:eventLogMonitorObject = New-EventLogMonitorObject -LogName $EventLogName -EventID $EventID -Servers $Servers -TaskDisplayNameFilter $EventTaskDisplayNameFilter -MessageFilter $EventMessageFilter -Level $EventLevel -SusspendMonitorServerHostWriters $EventSusspendMonitorServerHostWriters -EventFilterStartTimeUpdateEnabled $EventTimeUpdateEnabled -EventFilterStartTimeUpdateIntervalInSeconds $EventTimeUpdateIntervalInSeconds
     }
 
     if($EnableExperfwizManager)
@@ -1967,6 +2013,7 @@ Function Main {
             $Script:mailMessageObject.UpdateMessageBodyTypeArray($MessageBody)
             Send-MailObject -SendMail $Script:mailMessageObject 
         }
+        $Script:eventLogMonitorObject.GetEventData()
         Write-HostWriter("Restarting the data collection process as issue count hasn't been met.")
         $issueCount++
     }
@@ -1991,7 +2038,7 @@ if($StopDataCollectors)
 {   
     $netshTraceObject = New-NetshTraceObject -ServerList $Servers 
     $netshTraceObject.StopTrace()
-    $Script:extraObject = New-ExtraLogmanObject -ServerList $Servers -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent
+    $Script:extraObject = New-ExtraLogmanObject -Servers $Servers -ExtraTraceConfigFileContent $ExtraTraceConfigFileContent
     $Script:extraObject.StopLogman()
 
     exit 
