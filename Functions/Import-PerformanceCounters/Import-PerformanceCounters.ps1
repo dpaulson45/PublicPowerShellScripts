@@ -8,79 +8,21 @@ param(
 [Parameter(Mandatory=$false)][array]$Counters
 )
 
+#Function Version 1.3
+<# 
+Required Functions: 
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-CounterSampleToCounterObjectName/Get-CounterSampleToCounterObjectName.ps1
+#>
 <#
     When passing something like \\*\Process(*)\* we see a dramatic decrease in performance of reading the file. In a 1 GB file we see a decrease of performance by a few minutes vs providing all the values for the counters in Process
     For example: "\\*\Process(*)\% Privileged Time","\\*\Process(*)\% Processor Time","\\*\Process(*)\% User Time","\\*\Process(*)\Creating Process ID",..... so on
 #>
-
-#Function Version 1.2
-Function Write-VerboseWriter {
-    param(
-    [Parameter(Mandatory=$true)][string]$WriteString 
-    )
-        #Always want to add [{0}]: date time now to the start of the string 
-        $WriteString = "[{0}]: {1}" -f [datetime]::Now, $WriteString
-        if($VerboseFunctionCaller -eq $null)
-        {
-            Write-Verbose $WriteString
-        }
-        else 
-        {
-            &$VerboseFunctionCaller $WriteString
-        }
-    }
-    
-#############################
-#
-# Template Functions 
-#
-#############################
-
-
-# Template Master: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-CounterSampleToCounterObjectName/Get-CounterSampleToCounterObjectName.ps1
-Function Get-CounterSampleToCounterObjectName {
-[CmdletBinding()]
-param(
-[Parameter(Mandatory=$true)][object]$PerformanceCounterSample
-)
-
-#Function Version 1.1
-
-$counterObj = New-Object -TypeName pscustomobject
-$FullName = $PerformanceCounterSample.Path 
-#\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\avg. disk sec/read
-$endOfServerIndex = $FullName.IndexOf("\",2) #\\adt-e2k13aio1 <> \logicaldisk(harddiskvolume1)\avg. disk sec/read
-$startOfCounterIndex = $FullName.LastIndexOf("\") + 1 #\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\ <> avg. disk sec/read
-$endOfCounterObjectIndex = $FullName.IndexOf("(") 
-if($endOfCounterObjectIndex -eq -1){$endOfCounterObjectIndex = $startOfCounterIndex - 1}
-if(($FullName.Contains("(")) -and ($FullName.Contains("#")))
-{
-    $instanceName = ($FullName.Substring($endOfCounterObjectIndex + 1, ($FullName.IndexOf(")") - $endOfCounterObjectIndex - 1)))
-}
-else 
-{
-    $instanceName = ($PerformanceCounterSample.InstanceName)
-}
-$counterObj | Add-Member -MemberType NoteProperty -Name "FullName" -Value $FullName
-$counterObj | Add-Member -MemberType NoteProperty -Name "ServerName" -Value ($FullName.Substring(2,($endOfServerIndex - 2)))
-$counterObj | Add-Member -MemberType NoteProperty -Name "ObjectName" -Value ($FullName.Substring($endOfServerIndex + 1, $endOfCounterObjectIndex - $endOfServerIndex - 1))
-$counterObj | Add-Member -MemberType NoteProperty -Name "InstanceName" -Value $instanceName
-$counterObj | Add-Member -MemberType NoteProperty -Name "CounterName" -Value ($FullName.Substring($startOfCounterIndex))
-
-return $counterObj
-}
-# End Function Get-CounterSampleToCounterObjectName
-
-
-
-
-
-#############################
-#
-# End Template Functions 
-#
-#############################
-
+<#
+TODO:
+- Remove directory parameter, instead use FilePath. This way the user has the control prior to this function on how to use it
+- Remove the array in Get-FastCounterNames 
+#>
 Function Get-FastCounterNames {
 param(
 [Parameter(Mandatory=$true)][array]$FilePaths 
@@ -137,8 +79,7 @@ param(
     return $masterCounterList
 }
 
-
-
+########## Parameter Binding Exceptions ##############
 
 if(-not(Test-Path $Directory))
 {
