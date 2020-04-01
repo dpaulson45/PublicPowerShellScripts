@@ -1,7 +1,8 @@
 Function Load-PerformanceCounters {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$true)][string]$Directory,
+[Parameter(Mandatory=$true,ParameterSetName="Directory")][string]$Directory,
+[Parameter(Mandatory=$true,ParameterSetName="FilePaths")][array]$FilePaths,
 [Parameter(Mandatory=$false)][Int64]$MaxSample = [Int64]::MaxValue, 
 [Parameter(Mandatory=$false)][datetime]$StartTime = [datetime]::MinValue, 
 [Parameter(Mandatory=$false)][datetime]$EndTime = [datetime]::MaxValue,
@@ -15,9 +16,19 @@ Required Functions:
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-CounterDataObject/New-CounterDataObject.ps1
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
 #>
- 
+if($PSBoundParameters.ContainsKey('Directory'))
+{
+    $FilePaths = (Get-ChildItem $Directory | ?{$_.Extension -eq ".blg"}).VersionInfo.FileName
+}
+foreach($filePath in $FilePaths)
+{
+    if(!(Test-Path $filePath))
+    {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid files"
+    }
+}
 [System.Diagnostics.Stopwatch]$stopWatchTotal = [System.Diagnostics.Stopwatch]::StartNew()
-$importCounters = Import-PerformanceCounters -Directory $Directory -MaxSample $MaxSample -StartTime $StartTime -EndTime $EndTime -Counters $Counters 
+$importCounters = Import-PerformanceCounters -FilePaths $FilePaths -MaxSample $MaxSample -StartTime $StartTime -EndTime $EndTime -Counters $Counters 
 $measureGroupTime = Measure-Command { $groupData = $importCounters | Group-Object Path }
 Write-VerboseWriter("[{0}]: Took {1} seconds to group the path data" -f [datetime]::Now, $measureGroupTime.TotalSeconds)
 [System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
