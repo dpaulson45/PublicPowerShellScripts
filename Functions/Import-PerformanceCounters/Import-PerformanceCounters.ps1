@@ -1,14 +1,14 @@
 Function Import-PerformanceCounters {
 [CmdletBinding()]
 param(
-[Parameter(Mandatory=$true)][string]$Directory,
+[Parameter(Mandatory=$true)][array]$FilePaths,
 [Parameter(Mandatory=$false)][Int64]$MaxSample = [Int64]::MaxValue, 
 [Parameter(Mandatory=$false)][datetime]$StartTime = [datetime]::MinValue, 
 [Parameter(Mandatory=$false)][datetime]$EndTime = [datetime]::MaxValue,
 [Parameter(Mandatory=$false)][array]$Counters
 )
 
-#Function Version 1.3
+#Function Version 1.4
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -18,19 +18,15 @@ Required Functions:
     When passing something like \\*\Process(*)\* we see a dramatic decrease in performance of reading the file. In a 1 GB file we see a decrease of performance by a few minutes vs providing all the values for the counters in Process
     For example: "\\*\Process(*)\% Privileged Time","\\*\Process(*)\% Processor Time","\\*\Process(*)\% User Time","\\*\Process(*)\Creating Process ID",..... so on
 #>
-<#
-TODO:
-- Remove directory parameter, instead use FilePath. This way the user has the control prior to this function on how to use it
-- Remove the array in Get-FastCounterNames 
-#>
+
 Function Get-FastCounterNames {
 param(
-[Parameter(Mandatory=$true)][array]$FilePaths 
+[Parameter(Mandatory=$true)][string]$Path  
 )
     Write-VerboseWriter("Getting the Counter Names vs using wild card as this has better performance")
     [System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
     $myParmas = @{
-        Path = $FilePaths
+        Path = $Path
         StartTime = $StartTime
         EndTime = $EndTime
         MaxSample = 2
@@ -81,10 +77,12 @@ param(
 
 ########## Parameter Binding Exceptions ##############
 
-if(-not(Test-Path $Directory))
+foreach($filePath in $FilePaths)
 {
-    $displayError = "Failed to provide valid Directory. '{0}'" -f $Directory
-    throw [System.Management.Automation.ParameterBindingException] $displayError
+    if(!(Test-Path $filePath))
+    {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid FilePaths"
+    }
 }
 if($StartTime -eq $null)
 {
@@ -98,20 +96,9 @@ if($MaxSample -eq $null)
 {
     throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid MaxSample"
 }
-if(($files = Get-ChildItem $Directory | ?{$_.Extension -eq ".blg"}) -eq $null)
-{
-    throw "No files in the directory"
-}
-
-$filePaths = @()
-
-foreach($file in $files)
-{
-    $filePaths += $file.VersionInfo.FileName
-}
 
 $params = @{
-    Path = $filePaths
+    Path = $FilePaths
     StartTime = $StartTime
     EndTime = $EndTime
     MaxSample = $MaxSample
@@ -121,7 +108,7 @@ $params = @{
 
 if($Counters -ne $null -and $Counters.count -gt 0)
 {
-    $fastCounters = Get-FastCounterNames -FilePaths ($filePaths[0])
+    $fastCounters = Get-FastCounterNames -Path ($FilePaths[0])
     $params.Add("Counter", $fastCounters)
 }
 
