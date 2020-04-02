@@ -43,7 +43,7 @@ namespace PerformanceCounters
 
     public class CounterData : PerformanceCounterName
     {
-        public CounterAccuracy Accurarcy; 
+        public CounterAccuracy Accuracy; 
         public object[] AllData; 
         public int GetDataCount { get { return AllData.Count() - 1;  } }
         public Hashtable TimeHash; 
@@ -53,7 +53,7 @@ namespace PerformanceCounters
 
         public CounterData()
         {
-            this.Accurarcy = new CounterAccuracy();
+            this.Accuracy = new CounterAccuracy();
             this.TimeHash = new Hashtable();
         }
     }
