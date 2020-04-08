@@ -8,7 +8,7 @@ param(
 [Parameter(Mandatory=$false)][array]$Counters
 )
 
-#Function Version 1.4
+#Function Version 1.5
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -21,9 +21,28 @@ Required Functions:
 
 Function Get-FastCounterNames {
 param(
-[Parameter(Mandatory=$true)][string]$Path  
+[Parameter(Mandatory=$true)][string]$Path,
+[Parameter(Mandatory=$true)][array]$Counters
 )
     Write-VerboseWriter("Getting the Counter Names vs using wild card as this has better performance")
+    [System.Collections.Generic.List[System.Object]]$masterCounterList = New-Object -TypeName System.Collections.Generic.List[System.Object]
+    $findFastTrackCounters = @()
+    foreach($counter in $Counters)
+    {
+        if(!($counter.EndsWith("\*")))
+        {
+            $masterCounterList.Add($counter)
+        }
+        else 
+        {
+            $findFastTrackCounters += $counter
+        }
+    }
+    if($findFastTrackCounters -eq $null -or $findFastTrackCounters.Count -eq 0)
+    {
+        Write-VerboseWriter("All counters in the list are already optimized.")
+        return $masterCounterList
+    }
     [System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
     $myParmas = @{
         Path = $Path
@@ -32,7 +51,7 @@ param(
         MaxSample = 2
         ErrorAction = "SilentlyContinue"
         Verbose = $false 
-        Counter = $Counters
+        Counter = $findFastTrackCounters
     }
     
     $measureImport = Measure-Command {$results = (Import-Counter @myParmas).CounterSamples}
@@ -40,8 +59,7 @@ param(
 
     $measureGroup = Measure-Command { $groupResults = $results | Group-Object Path }
     Write-VerboseWriter("Took {0} seconds to group the results" -f $measureGroup.TotalSeconds)
-
-    $masterCounterList = @() 
+ 
     foreach($counterGroup in $groupResults)
     {
         $inList = $false
@@ -68,7 +86,7 @@ param(
             $addCounter = "\\*\{0}(*)\{1}"    
         }
         $addCounter = $addCounter -f $counterNameObj.ObjectName, $counterNameObj.CounterName
-        $masterCounterList += $addCounter
+        $masterCounterList.Add($addCounter)
     }
     $stopWatch.Stop()
     Write-VerboseWriter("Finished getting the counter list in {0} seconds" -f $stopWatch.Elapsed.TotalSeconds)
