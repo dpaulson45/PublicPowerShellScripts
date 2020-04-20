@@ -8,12 +8,12 @@ param(
 [Parameter(Mandatory=$false)][array]$Counters
 )
 
-#Function Version 1.5
+#Function Version 1.6
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-CounterSampleToCounterObjectName/Get-CounterSampleToCounterObjectName.ps1
 #>
+#If Load-PerformanceCounters isn't issued within the script, must use the schema from: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/AddTypeSchema/LoadPerformanceCounters_Schema.ps1
 <#
     When passing something like \\*\Process(*)\* we see a dramatic decrease in performance of reading the file. In a 1 GB file we see a decrease of performance by a few minutes vs providing all the values for the counters in Process
     For example: "\\*\Process(*)\% Privileged Time","\\*\Process(*)\% Processor Time","\\*\Process(*)\% User Time","\\*\Process(*)\Creating Process ID",..... so on
@@ -57,13 +57,14 @@ param(
     $measureImport = Measure-Command {$results = (Import-Counter @myParmas).CounterSamples}
     Write-VerboseWriter("Took {0} seconds to import" -f $measureImport.TotalSeconds)
 
-    $measureGroup = Measure-Command { $groupResults = $results | Group-Object Path }
+    $measureGroup = Measure-Command { $groupResults = [LoadPerformanceCounters.PerformanceCounters]::GroupPerformanceCounterSamplesByPath($results) }
     Write-VerboseWriter("Took {0} seconds to group the results" -f $measureGroup.TotalSeconds)
  
-    foreach($counterGroup in $groupResults)
+    foreach($key in $groupResults.Keys)
     {
         $inList = $false
-        $counterName = $counterGroup.Name 
+        $counterGroup = $groupResults[$key][0]
+        $counterName = $counterGroup.Path
         foreach($counterCheck in $masterCounterList)
         {
             if($counterName -like $counterCheck)
@@ -76,7 +77,7 @@ param(
         {
             continue 
         }
-        $counterNameObj = Get-CounterSampleToCounterObjectName -PerformanceCounterSample $counterGroup.Group[0]
+        $counterNameObj = [LoadPerformanceCounters.PerformanceCounterName]::GetPerformanceCounterNameFromFullName($counterName, $counterGroup.InstanceName)
         if([string]::IsNullOrEmpty($counterNameObj.InstanceName))
         {
             $addCounter = "\\*\{0}\{1}"
