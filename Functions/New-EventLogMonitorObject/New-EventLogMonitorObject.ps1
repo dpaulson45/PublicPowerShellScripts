@@ -3,6 +3,7 @@ Function New-EventLogMonitorObject {
 param(
 [Parameter(Mandatory=$false)][string]$LogName = "Application",
 [Parameter(Mandatory=$false)][int]$EventID,
+[Parameter(Mandatory=$false)][string]$ProviderName,
 [Parameter(Mandatory=$false)][int]$Level = -1,
 [Parameter(Mandatory=$false)][string]$TaskDisplayNameFilter,
 [Parameter(Mandatory=$false)][string]$MessageFilter,
@@ -17,7 +18,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.5
+#Function Version 1.6
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
@@ -99,6 +100,10 @@ StartTime = $StartTime
 if($Level -ne -1)
 {
     $filterHashTable.Add("Level",$Level)
+}
+if(!([string]::IsNullOrEmpty($ProviderName)))
+{
+    $filterHashTable.Add("ProviderName",$ProviderName)
 }
 $eventLogMonitorObject | Add-Member -MemberType NoteProperty -Name "FilterHashtable" -Value $filterHashTable
 

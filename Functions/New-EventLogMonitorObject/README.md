@@ -6,6 +6,7 @@ Parameter | Description
 ----------|------------
 LogName | The Event Log Name. Default Application. 
 EventID | The Event ID number. Required. 
+ProviderName | The name of source of the event that you can filter on.
 Level | The level of the event filter. 
 TaskDisplayNameFilter | The filter on the event of the TaskDisplayName property. 
 MessageFilter | The filter on the event of the Message property. 
