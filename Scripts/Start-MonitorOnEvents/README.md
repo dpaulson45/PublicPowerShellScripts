@@ -16,6 +16,7 @@ MDBFailureItemTags | The list of failure tag types that you wish to monitor for.
 ActiveDatabaseGUIDs | The GUIDs of the databases that you wish to only monitor. If this is left blank, any event for the filtered Tag IDs will trigger the monitor's condition to be met. 
 EventLogName | The name of the Event Log that you wish to have be monitored. Default value "Application"
 EventID | The Event ID that you are looking for. Default value "2080"
+EventProviderName | The name of the source that you want to be focused on for this event. 
 EventLevel | The Event Level that you are looking for. (Information, Error, Warning)
 EventTaskDisplayNameFilter | The additional filter that you wish to be looking for if the event ID is common but the task category isn't. This filter happens after the Get-WinEvent command completes.
 EventMessageFilter | The additional filter that you wish to be looking for in the message property of the event. This filter happens after the Get-WinEvent command completes.
