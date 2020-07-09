@@ -4,7 +4,7 @@ param(
 [Parameter(Mandatory=$false)][string]$RegistryHive = "LocalMachine",
 [Parameter(Mandatory=$true)][string]$MachineName,
 [Parameter(Mandatory=$true)][string]$SubKey,
-[Parameter(Mandatory=$true)][string]$GetValue,
+[Parameter(Mandatory=$false)][string]$GetValue,
 [Parameter(Mandatory=$false)][bool]$ReturnAfterOpenSubKey,
 [Parameter(Mandatory=$false)][object]$DefaultValue,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
