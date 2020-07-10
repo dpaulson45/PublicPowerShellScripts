@@ -11,7 +11,7 @@ param(
 [switch]$StopDataCollectors
 )
 
-$scriptVersion = 0.1
+$scriptVersion = 0.2
 
 $display = @"
 
@@ -170,7 +170,7 @@ param(
 [Parameter(Mandatory=$false)][int]$EtlFileSize = 400,
 #[Parameter(Mandatory=$false)][string]$EtlCNF, # = "00:30:00", #TODO see if this is truly needed
 [Parameter(Mandatory=$false)][string]$FileDirectory = "C:\Traces",
-[Parameter(Mandatory=$false)][string]$Provider = "Microsoft Exchange Server 2010",
+[Parameter(Mandatory=$false)][string]$Provider = "`{79bb49e6-2a2c-46e4-9167-fa122525d540`}",
 [Parameter(Mandatory=$false)][string]$AppendVersioningToFile = "mmddhhmm",
 [Parameter(Mandatory=$false)][array]$Servers,
 [Parameter(Mandatory=$false)][array]$ExtraTraceConfigFileContent
