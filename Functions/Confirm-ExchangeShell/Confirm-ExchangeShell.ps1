@@ -3,9 +3,10 @@ Function Confirm-ExchangeShell {
 param(
 [Parameter(Mandatory=$false)][bool]$LoadExchangeShell = $true,
 [Parameter(Mandatory=$false)][bool]$LoadExchangeVariables = $true,
+[Parameter(Mandatory=$false)][bool]$ByPassLocalExchangeServerTest = $false,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.5
+#Function Version 1.6
 <#
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
@@ -16,11 +17,12 @@ Required Functions:
 $passed = $false
 $IsEdgeTransport = $false
 Write-VerboseWriter("Calling: Confirm-ExchangeShell")
-Write-VerboseWriter("Passed: [bool]LoadExchangeShell: {0} | [bool]LoadExchangeVariables: {1}" -f $LoadExchangeShell,
-$LoadExchangeVariables)
+Write-VerboseWriter("Passed: [bool]LoadExchangeShell: {0} | [bool]LoadExchangeVariables: {1} | [bool]ByPassLocalExchangeServerTest: {2}" -f $LoadExchangeShell,
+$LoadExchangeVariables, $ByPassLocalExchangeServerTest)
 #Test that we are on Exchange 2010 or newer
-if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or 
-(Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'))
+if(($isLocalExchangeServer = (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup')) -or
+($isLocalExchangeServer = (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup')) -or
+$ByPassLocalExchangeServerTest)
 {
     Write-VerboseWriter("We are on Exchange 2010 or newer")
     if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\EdgeTransportRole') -or
@@ -31,6 +33,24 @@ if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or
     }
     try 
     {
+        if(((Get-PSSession | Where-Object {($_.Availability -eq 'Available') -and
+            ($_.ConfigurationName -eq 'Microsoft.Exchange')}).Count -eq 0) -and
+            ((Get-Module -Name RemoteExchange).Count -eq 1))
+        {
+            Write-VerboseWriter("Removing RemoteExchange module")
+            Remove-Module -Name RemoteExchange
+            $currentPSModules = Get-Module
+            foreach ($PSModule in $currentPSModules)
+            {
+                if(($PSModule.ModuleType -eq "Script") -and
+                    ($PSModule.ModuleBase -like "*\Microsoft\Exchange\RemotePowerShell\*"))
+                {
+                    Write-VerboseWriter("Removing module {0} for implicit remoting" -f $PSModule.Name)
+                    Remove-Module -Name $PSModule.Name
+                }
+            }
+        }
+
         Get-ExchangeServer -ErrorAction Stop | Out-Null
         Write-VerboseWriter("Exchange PowerShell Module already loaded.")
         $passed = $true 
@@ -43,7 +63,8 @@ if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or
             & $CatchActionFunction
             $watchErrors = $true
         }
-        if($LoadExchangeShell)
+        if($LoadExchangeShell -and
+            $isLocalExchangeServer)
         {
             Write-HostWriter "Loading Exchange PowerShell Module..."
             try
@@ -88,7 +109,8 @@ if((Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup') -or
     finally 
     {
         if($LoadExchangeVariables -and 
-            $passed)
+            $passed -and
+            $isLocalExchangeServer)
         {
             if($ExInstall -eq $null -or $ExBin -eq $null)
             {
