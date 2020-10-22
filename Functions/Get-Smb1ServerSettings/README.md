@@ -16,7 +16,7 @@ Property | Description
 RegistryValue | The registry value of "SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\SMB1"
 SmbServerConfiguration | The output from Get-SmbServerConfiguration
 WindowsFeature | The output from Get-WindowsFeature 
-Smb1Enabled | Internal logic that determines if Smb1 is truly enabled or not based off the settings from the 3 checks that we do.
+Smb1Status | Internal logic that determines if SMB1 is blocked and not installed (2), SMB1 blocked or not installed (1), or SMB1 is not blocked and installed (0). 
 
 # How To Use
 
