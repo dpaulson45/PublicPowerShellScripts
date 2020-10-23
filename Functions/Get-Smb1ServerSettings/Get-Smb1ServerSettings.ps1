@@ -2,54 +2,71 @@ Function Get-Smb1ServerSettings {
 [CmdletBinding()]
 param(
 [string]$ServerName = $env:COMPUTERNAME,
-[bool]$Windows2012R2OrGreater = $true,
 [scriptblock]$CatchActionFunction
 )
-#Function Version 1.1
+#Function Version 1.2
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Invoke-RegistryGetValue/Invoke-RegistryGetValue.ps1
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Invoke-ScriptBlockHandler/Invoke-ScriptBlockHandler.ps1
 #>
 
 Write-VerboseWriter("Calling: Get-Smb1ServerSettings")
-Write-VerboseWriter("Passed ServerName: {0} | Windows2012R2OrGreater: {1}" -f $ServerName, $Windows2012R2OrGreater)
-$regSmb1ServerSettings = Invoke-RegistryGetValue -MachineName $ServerName -SubKey "SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -GetValue "SMB1" -CatchActionFunction $CatchActionFunction
+Write-VerboseWriter("Passed ServerName: {0}" -f $ServerName)
 $smbServerConfiguration = Invoke-ScriptBlockHandler -ComputerName $ServerName -ScriptBlock {Get-SmbServerConfiguration} -CatchActionFunction $CatchActionFunction -ScriptBlockDescription "Get-SmbServerConfiguration"
 
-if ($Windows2012R2OrGreater)
+<#
+Unknown 0
+Failed to get Install Setting 1
+Install is set to true 2
+Install is set to false 4
+Failed to get Block Setting 8
+SMB1 is not being blocked 16
+SMB1 is being blocked 32
+#>
+
+$smb1Status = 0
+
+try
 {
-    try
+    $windowsFeature = Get-WindowsFeature "FS-SMB1" -ComputerName $ServerName -ErrorAction Stop
+}
+catch 
+{
+    Write-VerboseWriter("Failed to Get-WindowsFeature for FS-SMB1")
+    if ($CatchActionFunction -ne $null)
     {
-        $windowsFeature = Get-WindowsFeature "FS-SMB1" -ComputerName $ServerName -ErrorAction Stop
-    }
-    catch 
-    {
-        Write-VerboseWriter("Failed to Get-WindowsFeature for FS-SMB1")
-        if ($CatchActionFunction -ne $null)
-        {
-            & $CatchActionFunction
-        }
+        & $CatchActionFunction
     }
 }
 
-[int]$smb1Status = 2
-if (($smbServerConfiguration.EnabledSMB1Protocol -and
-    $windowsFeature.Installed) -or
-    $regSmb1ServerSettings -ne 0)
+if ($windowsFeature -eq $null)
 {
-    $smb1Status = 0
+    $smb1Status += 1
 }
-elseif ($smbServerConfiguration.EnabledSMB1Protocol -or
-    $windowsFeature.Installed -or
-    $regSmb1ServerSettings -ne 0)
+elseif ($windowsFeature.Installed)
 {
-    $smb1Status = 1
+    $smb1Status += 2
+}
+else
+{
+    $smb1Status += 4
+}
+
+if ($smbServerConfiguration -eq $null)
+{
+    $smb1Status += 8
+}
+elseif ($smbServerConfiguration.EnableSMB1Protocol)
+{
+    $smb1Status += 16
+}
+else
+{
+    $smb1Status += 32
 }
 
 $smb1ServerSettings = New-Object PSCustomObject
-$smb1ServerSettings | Add-Member -MemberType NoteProperty -Name "RegistryValue" -Value $regSmb1ServerSettings
 $smb1ServerSettings | Add-Member -MemberType NoteProperty -Name "SmbServerConfiguration" -Value $smbServerConfiguration
 $smb1ServerSettings | Add-Member -MemberType NoteProperty -Name "WindowsFeature" -Value $windowsFeature
 $smb1ServerSettings | Add-Member -MemberType NoteProperty -Name "Smb1Status" -Value $smb1Status
