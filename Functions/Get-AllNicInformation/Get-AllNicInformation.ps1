@@ -5,14 +5,63 @@ param(
 [Parameter(Mandatory=$false)][string]$ComputerFQDN,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.1
+#Function Version 1.2
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-WmiObjectHandler/Get-WmiObjectHandler.ps1
+    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Invoke-RegistryGetValue/Invoke-RegistryGetValue.ps1
 #>
 Write-VerboseWriter("Calling: Get-AllNicInformation")
 Write-VerboseWriter("Passed [string]ComputerName: {0} | [string]ComputerFQDN: {1}" -f $ComputerName, $ComputerFQDN)
+
+
+Function Get-NicPnpCapabilitiesSetting {
+[CmdletBinding()]
+param(
+[string]$NicAdapterComponentId
+)
+
+if ($NicAdapterComponentId -eq [string]::Empty)
+{
+    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid NicAdapterDeviceId or NicAdapterComponentId"
+}
+
+$nicAdapterBasicPath = "SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
+Write-VerboseWriter("Probing started to detect NIC adapter registry path")
+[int]$i = 0
+
+do {
+    $nicAdapterPnPCapabilitiesProbingKey = "{0}\{1}" -f $nicAdapterBasicPath, ($i.ToString().PadLeft(4,"0"))
+    $netCfgInstanceId = Invoke-RegistryGetValue -MachineName $ComputerName -Subkey $nicAdapterPnPCapabilitiesProbingKey -GetValue "NetCfgInstanceId" -CatchActionFunction $CatchActionFunction
+
+    if ($netCfgInstanceId -eq $NicAdapterComponentId)
+    {
+        Write-VerboseWriter("Matching ComponentId found - now checking for PnPCapabilitiesValue")
+        $nicAdapterPnPCapabilitiesValue = Invoke-RegistryGetValue -MachineName $ComputerName -SubKey $nicAdapterPnPCapabilitiesProbingKey -GetValue "PnPCapabilities" -CatchActionFunction $CatchActionFunction
+        break
+    }
+    else
+    {
+        Write-VerboseWriter("No matching ComponentId found")
+        $i++
+    }
+} while ($null -ne $netCfgInstanceId)
+
+$obj = New-Object PSCustomObject
+$sleepyNicDisabled = $false
+
+if ($nicAdapterPnPCapabilitiesValue -eq 24 -or
+    $nicAdapterPnPCapabilitiesValue -eq 280)
+{
+    $sleepyNicDisabled = $true
+}
+
+$obj | Add-Member -MemberType NoteProperty -Name "PnPCapabilities" -Value $nicAdapterPnPCapabilitiesValue
+$obj | Add-Member -MemberType NoteProperty -Name "SleepyNicDisabled" -Value $sleepyNicDisabled
+return $obj
+
+}
 
 Function Get-NetworkConfiguration {
 [CmdletBinding()]
@@ -23,7 +72,7 @@ param(
     {
         $currentErrors = $Error.Count
         $cimSession = New-CimSession -ComputerName $ComputerName -ErrorAction Stop
-        $networkIpConfiguration = Get-NetIPConfiguration -CimSession $CimSession -ErrorAction Stop
+        $networkIpConfiguration = Get-NetIPConfiguration -CimSession $CimSession -ErrorAction Stop | ?{$_.NetAdapter.MediaConnectionState -eq "Connected"}
 
         if ($CatchActionFunction -ne $null)
         {
@@ -77,6 +126,7 @@ param(
         if (!$WmiObject)
         {
             $adapter = $networkConfig.NetAdapter
+            $nicPnpCapabilitiesSetting = Get-NicPnpCapabilitiesSetting -NicAdapterComponentId $adapter.DeviceID
 
             try
             {
@@ -93,6 +143,7 @@ param(
         else
         {
             $adapter = $networkConfig
+            $nicPnpCapabilitiesSetting = Get-NicPnpCapabilitiesSetting -NicAdapterComponentId $adapter.Guid
         }
 
         $nicInformationObj = New-Object PSCustomObject
@@ -105,6 +156,8 @@ param(
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "Description" -Value $adapter.Description
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "DriverVersion" -Value [string]::Empty
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "MTUSize" -Value 0
+        $nicInformationObj | Add-Member -MemberType NoteProperty -Name "PnPCapabilities" -Value ($nicPnpCapabilitiesSetting.PnPCapabilities)
+        $nicInformationObj | Add-Member -MemberType NoteProperty -Name "SleepyNicDisabled" -Value ($nicPnpCapabilitiesSetting.SleepyNicDisabled)
 
         if (!$WmiObject)
         {
