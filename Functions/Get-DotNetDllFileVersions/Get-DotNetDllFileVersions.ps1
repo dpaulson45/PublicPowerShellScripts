@@ -6,7 +6,7 @@ param(
 [scriptblock]$CatchActionFunction
 )
 
-#Function Version 1.0
+#Function Version 1.1
 <#
 Required Functions:
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -20,7 +20,20 @@ Function ScriptBlock-GetItem{
 param(
 [string]$FilePath
 )
-    return Get-Item $FilePath
+    $getItem = Get-Item $FilePath
+
+    $returnObject = ([PSCustomObject]@{
+        GetItem = $getItem
+        LastWriteTimeUtc = $getItem.LastWriteTimeUtc
+        VersionInfo = ([PSCustomObject]@{
+            FileMajorPart = $getItem.VersionInfo.FileMajorPart
+            FileMinorPart = $getItem.VersionInfo.FileMinorPart
+            FileBuildPart = $getItem.VersionInfo.FileBuildPart
+            FilePrivatePart = $getItem.VersionInfo.FilePrivatePart
+        })
+    })
+
+    return $returnObject
 }
 
 $dotNetInstallPath = Invoke-RegistryGetValue -MachineName $ComputerName -SubKey "SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" -GetValue "InstallPath" -CatchActionFunction $CatchActionFunction
