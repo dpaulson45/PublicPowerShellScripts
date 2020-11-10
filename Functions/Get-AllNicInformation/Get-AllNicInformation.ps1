@@ -5,7 +5,7 @@ param(
 [Parameter(Mandatory=$false)][string]$ComputerFQDN,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.2
+#Function Version 1.3
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -123,17 +123,41 @@ param(
     [array]$nicObjects = @()
     foreach($networkConfig in $NetworkConfigurations)
     {
+        $dnsClient = $null
+        $rssEnabledValue = 2
+        $netAdapterRss = $null
         if (!$WmiObject)
         {
+            Write-VerboseWriter("Working on NIC: {0}" -f $networkConfig.InterfaceDescription)
             $adapter = $networkConfig.NetAdapter
             $nicPnpCapabilitiesSetting = Get-NicPnpCapabilitiesSetting -NicAdapterComponentId $adapter.DeviceID
 
             try
             {
                 $dnsClient = $adapter | Get-DnsClient
+                Write-VerboseWriter("Got DNS Client information")
             }
             catch
             {
+                Write-VerboseWriter("Failed to get the DNS Client information")
+                if ($CatchActionFunction -ne $null)
+                {
+                    & $CatchActionFunction
+                }
+            }
+
+            try
+            {
+                $netAdapterRss = $adapter | Get-NetAdapterRss
+                Write-VerboseWriter("Got Net Adapter RSS information")
+                if ($netAdapterRss -ne $null)
+                {
+                    [int]$rssEnabledValue = $netAdapterRss.Enabled
+                }
+            }
+            catch
+            {
+                Write-VerboseWriter("Failed to get RSS Information")
                 if ($CatchActionFunction -ne $null)
                 {
                     & $CatchActionFunction
@@ -142,6 +166,7 @@ param(
         }
         else
         {
+            Write-VerboseWriter("Working on NIC: {0}" -f $networkConfig.Description)
             $adapter = $networkConfig
             $nicPnpCapabilitiesSetting = Get-NicPnpCapabilitiesSetting -NicAdapterComponentId $adapter.Guid
         }
@@ -152,6 +177,8 @@ param(
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "LinkSpeed" -Value ((($adapter.Speed)/1000000).ToString() + " Mbps")
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "DriverDate" -Value [DateTime]::MaxValue
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "NICObject" -Value $networkConfig
+        $nicInformationObj | Add-Member -MemberType NoteProperty -Name "NetAdapterRss" -Value $netAdapterRss
+        $nicInformationObj | Add-Member -MemberType NoteProperty -Name "RssEnabledValue" -Value $rssEnabledValue
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "IPv6Enabled" -Value $false
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "Description" -Value $adapter.Description
         $nicInformationObj | Add-Member -MemberType NoteProperty -Name "DriverVersion" -Value [string]::Empty
