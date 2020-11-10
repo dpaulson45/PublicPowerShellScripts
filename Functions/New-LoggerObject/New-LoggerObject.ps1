@@ -13,7 +13,7 @@ param(
 [Parameter(Mandatory=$false)][scriptblock]$VerboseFunctionCaller
 )
 
-#Function Version 1.2
+#Function Version 1.3
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-ScriptMethodHostWriter.ps1
@@ -188,12 +188,12 @@ $loggerObject | Add-Member -MemberType ScriptMethod -Name "CheckFileSize" -Value
 $loggerObject | Add-Member -MemberType ScriptMethod -Name "CheckNumberOfFiles" -Value {
 
     $filter = "{0}*" -f $this.InstanceBaseName
-    $items = Get-ChildItem -Path $this.FileDirectory | ?{$_.Name -like $filter}
+    $items = Get-ChildItem -Path $this.FileDirectory | Where-Object {$_.Name -like $filter}
     if($items.Count -gt $this.NumberOfLogsToKeep)
     {
         do{
-            $items | Sort-Object LastWriteTime | Select -First 1 | Remove-Item -Force 
-            $items = Get-ChildItem -Path $this.FileDirectory | ?{$_.Name -like $filter}
+            $items | Sort-Object LastWriteTime | Select-Object -First 1 | Remove-Item -Force 
+            $items = Get-ChildItem -Path $this.FileDirectory | Where-Object {$_.Name -like $filter}
         }while($items.Count -gt $this.NumberOfLogsToKeep)
     }
 }

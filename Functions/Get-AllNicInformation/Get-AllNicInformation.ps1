@@ -5,7 +5,7 @@ param(
 [Parameter(Mandatory=$false)][string]$ComputerFQDN,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.3
+#Function Version 1.4
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -72,7 +72,7 @@ param(
     {
         $currentErrors = $Error.Count
         $cimSession = New-CimSession -ComputerName $ComputerName -ErrorAction Stop
-        $networkIpConfiguration = Get-NetIPConfiguration -CimSession $CimSession -ErrorAction Stop | ?{$_.NetAdapter.MediaConnectionState -eq "Connected"}
+        $networkIpConfiguration = Get-NetIPConfiguration -CimSession $CimSession -ErrorAction Stop | Where-Object {$_.NetAdapter.MediaConnectionState -eq "Connected"}
 
         if ($CatchActionFunction -ne $null)
         {
