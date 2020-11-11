@@ -6,7 +6,7 @@ param(
 [scriptblock]$CatchActionFunction
 )
 
-#Function Version 1.1
+#Function Version 1.2
 <#
 Required Functions:
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -16,7 +16,7 @@ Required Functions:
 
 Write-VerboseWriter("Calling: Get-DotNetDllFileVersions")
 
-Function ScriptBlock-GetItem{
+Function Invoke-ScriptBlockGetItem {
 param(
 [string]$FilePath
 )
@@ -48,7 +48,7 @@ $files = @{}
 foreach($filename in $FileNames)
 {
     Write-VerboseWriter("Query .NET DLL information for machine: {0}" -f $ComputerName)
-    $getItem = Invoke-ScriptBlockHandler -ComputerName $ComputerName -ScriptBlock ${Function:ScriptBlock-GetItem} -ArgumentList ("{0}\{1}" -f $dotNetInstallPath, $filename) -CatchActionFunction $CatchActionFunction
+    $getItem = Invoke-ScriptBlockHandler -ComputerName $ComputerName -ScriptBlock ${Function:Invoke-ScriptBlockGetItem} -ArgumentList ("{0}\{1}" -f $dotNetInstallPath, $filename) -CatchActionFunction $CatchActionFunction
     $files.Add($filename, $getItem)
 }
 
