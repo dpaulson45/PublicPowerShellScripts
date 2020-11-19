@@ -5,7 +5,7 @@ param(
 [Parameter(Mandatory=$false)][string]$ComputerFQDN,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.4
+#Function Version 1.5
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -14,7 +14,6 @@ Required Functions:
 #>
 Write-VerboseWriter("Calling: Get-AllNicInformation")
 Write-VerboseWriter("Passed [string]ComputerName: {0} | [string]ComputerFQDN: {1}" -f $ComputerName, $ComputerFQDN)
-
 
 Function Get-NicPnpCapabilitiesSetting {
 [CmdletBinding()]
@@ -120,6 +119,11 @@ param(
         return $obj
     }
 
+    if ($WmiObject)
+    {
+        $networkAdapterConfigurations = Get-WmiObjectHandler -ComputerName $ComputerName -Class "Win32_NetworkAdapterConfiguration" -Filter "IPEnabled = True" -CatchActionFunction $CatchActionFunction
+    }
+
     [array]$nicObjects = @()
     foreach($networkConfig in $NetworkConfigurations)
     {
@@ -192,7 +196,15 @@ param(
             $nicInformationObj.DriverDate = $adapter.DriverDate
             $nicInformationObj.DriverVersion = $adapter.DriverVersionString
             $nicInformationObj.Description = $adapter.InterfaceDescription
-            
+
+            foreach ($ipAddress in $networkConfig.AllIPAddresses.IPAddress)
+            {
+                if ($ipAddress.Contains(":"))
+                {
+                    $nicInformationObj.IPv6Enabled = $true
+                }
+            }
+
             $ipv4Address = @()
             for ($i = 0; $i -lt $networkConfig.IPv4Address.Count; $i++)
             {
@@ -240,6 +252,32 @@ param(
             $nicInformationObj | Add-Member -MemberType NoteProperty -Name "RegisteredInDns" -Value $dnsClient.RegisterThisConnectionsAddress
             $nicInformationObj | Add-Member -MemberType NoteProperty -Name "DnsServer" -Value $networkConfig.DNSServer.ServerAddresses
             $nicInformationObj | Add-Member -MemberType NoteProperty -Name "DnsClientObject" -Value $dnsClient
+        }
+        else 
+        {
+            $stopProcess = $false
+            foreach ($adapterConfiguration in $networkAdapterConfigurations)
+            {
+                Write-VerboseWriter("Working on '{0}' | SettingID: {1}" -f $adapterConfiguration.Description, ($settingId = $adapterConfiguration.SettingID))
+                if ($settingId -eq $networkConfig.GUID -or
+                    $settingId -eq $networkConfig.InterfaceGuid)
+                {
+                    foreach ($ipAddress in $adapterConfiguration.IPAddress)
+                    {
+                        if ($ipAddress.Contains(":"))
+                        {
+                            $nicInformationObj.IPv6Enabled = $true
+                            $stopProcess = $true
+                            break
+                        }
+                    }
+                }
+
+                if ($stopProcess)
+                {
+                    break
+                }
+            }
         }
 
         $nicObjects += $nicInformationObj 
