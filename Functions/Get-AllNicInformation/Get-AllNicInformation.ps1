@@ -5,7 +5,7 @@ param(
 [Parameter(Mandatory=$false)][string]$ComputerFQDN,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.5
+#Function Version 1.6
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -138,7 +138,7 @@ param(
 
             try
             {
-                $dnsClient = $adapter | Get-DnsClient
+                $dnsClient = $adapter | Get-DnsClient -ErrorAction Stop
                 Write-VerboseWriter("Got DNS Client information")
             }
             catch
@@ -152,7 +152,7 @@ param(
 
             try
             {
-                $netAdapterRss = $adapter | Get-NetAdapterRss
+                $netAdapterRss = $adapter | Get-NetAdapterRss -ErrorAction Stop
                 Write-VerboseWriter("Got Net Adapter RSS information")
                 if ($netAdapterRss -ne $null)
                 {
