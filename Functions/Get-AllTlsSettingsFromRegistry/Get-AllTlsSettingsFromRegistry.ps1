@@ -4,7 +4,7 @@ param(
 [Parameter(Mandatory=$true)][string]$MachineName,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.0
+#Function Version 1.1
 <# 
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -46,7 +46,7 @@ param(
             }
          }
         "DisabledByDefault" {
-            if($KeyValue -ne $null)
+            if($KeyValue -eq $null)
             {
                 Write-VerboseWriter("Failed to get TLS {0} {1} Disabled By Default Key on Server {2}. Setting to false." -f $TlsVersion, $ServerClientType, $MachineName)
                 return $false 
