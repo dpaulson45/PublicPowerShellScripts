@@ -6,7 +6,7 @@ param(
 [Parameter(Mandatory=$false)][bool]$ByPassLocalExchangeServerTest = $false,
 [Parameter(Mandatory=$false)][scriptblock]$CatchActionFunction
 )
-#Function Version 1.6
+#Function Version 1.7
 <#
 Required Functions: 
     https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
@@ -19,8 +19,12 @@ $IsEdgeTransport = $false
 Write-VerboseWriter("Calling: Confirm-ExchangeShell")
 Write-VerboseWriter("Passed: [bool]LoadExchangeShell: {0} | [bool]LoadExchangeVariables: {1} | [bool]ByPassLocalExchangeServerTest: {2}" -f $LoadExchangeShell,
 $LoadExchangeVariables, $ByPassLocalExchangeServerTest)
-#Test that we are on Exchange 2010 or newer
-if(($isLocalExchangeServer = (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup')) -or
+#Test that we are on Exchange 2010 or newer and not using x86 PowerShell to run the script
+if(!([Environment]::Is64BitProcess))
+{
+	Write-VerboseWriter("Script was executed using x86 PowerShell which isn't supported. Please use x64 PowerShell.")
+}
+elseif(($isLocalExchangeServer = (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\Setup')) -or
 ($isLocalExchangeServer = (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup')) -or
 $ByPassLocalExchangeServerTest)
 {
