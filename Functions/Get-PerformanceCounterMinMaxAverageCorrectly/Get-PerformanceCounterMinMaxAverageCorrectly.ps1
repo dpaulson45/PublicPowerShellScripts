@@ -1,14 +1,15 @@
 Function Get-PerformanceCounterMinMaxAverageCorrectly {
-[CmdletBinding()]
-param(
-[object]$PerformanceCounterSamples
-)
+    [CmdletBinding()]
+    param(
+        [object]$PerformanceCounterSamples
+    )
 
-<#
-Calculate Averages 
-Average calculation for Average counters taken from these references:
-https://msdn.microsoft.com/en-us/library/ms804010.aspx
-https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-averages-the-right-way-and-the-wrong-way/
+    #Function Version 1.1
+    <#
+    Calculate Averages
+    Average calculation for Average counters taken from these references:
+    https://msdn.microsoft.com/en-us/library/ms804010.aspx
+    https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-averages-the-right-way-and-the-wrong-way/
 
 [arrayorlist]PerformanceCounterSamples
     CookedValue
@@ -18,45 +19,37 @@ https://blogs.msdn.microsoft.com/ntdebugging/2013/09/30/performance-monitor-aver
     CounterType
 #>
 
-#Function Version 1.1
-if($PerformanceCounterSamples -eq $null -or $PerformanceCounterSamples.Count -le 1)
-{
-    throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounterSamples. Provide more than 1 sample as well."
-}
-
-$min = [int64]::MaxValue
-$max = [int64]::MinValue
-
-foreach($sample in $PerformanceCounterSamples)
-{
-    if($sample.CookedValue -lt $min) {$min = $sample.CookedValue}
-    if($sample.CookedValue -gt $max) {$max = $sample.CookedValue}
-}
-
-if($PerformanceCounterSamples[0].CounterType -like "AverageTimer*")
-{
-    $numTicksDiff = $PerformanceCounterSamples[-1].RawValue - $PerformanceCounterSamples[0].RawValue
-    $frequency = $PerformanceCounterSamples[-1].TimeBase
-    $numOpsDif = $PerformanceCounterSamples[-1].SecondValue
-    if($frequency -ne 0 -and $numTicksDiff -ne 0 -and $numOpsDif -ne 0)
-    {
-        $avg = (($numTicksDiff/ $frequency) / $numOpsDif)
+    if ($null -eq $PerformanceCounterSamples -or
+        $PerformanceCounterSamples.Count -le 1) {
+        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid PerformanceCounterSamples. Provide more than 1 sample as well."
     }
-    else 
-    {
-        $avg = 0
+
+    $min = [int64]::MaxValue
+    $max = [int64]::MinValue
+
+    foreach ($sample in $PerformanceCounterSamples) {
+        if ($sample.CookedValue -lt $min) { $min = $sample.CookedValue }
+        if ($sample.CookedValue -gt $max) { $max = $sample.CookedValue }
     }
-}
-else 
-{
-    $avg = ($PerformanceCounterSamples | Measure-Object -Property CookedValue -Average).Average
-}
 
-$minMaxAvgObj = New-Object pscustomobject
+    if ($PerformanceCounterSamples[0].CounterType -like "AverageTimer*") {
+        $numTicksDiff = $PerformanceCounterSamples[-1].RawValue - $PerformanceCounterSamples[0].RawValue
+        $frequency = $PerformanceCounterSamples[-1].TimeBase
+        $numOpsDif = $PerformanceCounterSamples[-1].SecondValue
+        if ($frequency -ne 0 -and $numTicksDiff -ne 0 -and $numOpsDif -ne 0) {
+            $avg = (($numTicksDiff / $frequency) / $numOpsDif)
+        } else {
+            $avg = 0
+        }
+    } else {
+        $avg = ($PerformanceCounterSamples | Measure-Object -Property CookedValue -Average).Average
+    }
 
-$minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Min" -Value $min
-$minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Max" -Value $max
-$minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Avg" -Value $avg
+    $minMaxAvgObj = New-Object pscustomobject
 
-return $minMaxAvgObj
+    $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Min" -Value $min
+    $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Max" -Value $max
+    $minMaxAvgObj | Add-Member -MemberType NoteProperty -Name "Avg" -Value $avg
+
+    return $minMaxAvgObj
 }

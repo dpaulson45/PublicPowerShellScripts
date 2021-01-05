@@ -1,18 +1,14 @@
-#Function Version 1.1
+#Function Version 1.2
 Function Write-HostWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString 
-)
-    if($Script:Logger -ne $null)
-    {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Need to use Write Host')]
+    param(
+        [Parameter(Mandatory = $true)][string]$WriteString
+    )
+    if ($null -ne $Script:Logger) {
         $Script:Logger.WriteHost($WriteString)
-    }
-    elseif($HostFunctionCaller -eq $null)
-    {
+    } elseif ($null -eq $HostFunctionCaller) {
         Write-Host $WriteString
-    }
-    else
-    {
-        &$HostFunctionCaller $WriteString    
+    } else {
+        &$HostFunctionCaller $WriteString
     }
 }

@@ -1,29 +1,29 @@
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification = 'Testing')]
+[CmdletBinding()]
+param()
+
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.','.'
-$here = $here.Replace("\Tests","")
+$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
+$here = $here.Replace("\Tests", "")
 . "$here\$sut"
 
 #Load Required Functions
 
-$content = Get-Content "$here\$sut" 
-$foundRequiredFunctions = $false 
-foreach($line in $content)
-{
-    if($foundRequiredFunctions)
-    {
-        if($line.Contains("#>"))
-        {
-            break 
+$content = Get-Content "$here\$sut"
+$foundRequiredFunctions = $false
+foreach ($line in $content) {
+    if ($foundRequiredFunctions) {
+        if ($line.Contains("#>")) {
+            break
         }
         $webRequest = Invoke-WebRequest $line.Trim()
-        if($webRequest -ne $null -and $webRequest.Content)
-        {
-            Invoke-Expression $webRequest.Content 
+        if ($null -ne $webRequest -and
+            $webRequest.Content) {
+            Invoke-Expression $webRequest.Content
         }
     }
-    if($line.Contains("Required Functions:"))
-    {
-        $foundRequiredFunctions = $true 
+    if ($line.Contains("Required Functions:")) {
+        $foundRequiredFunctions = $true
         continue
     }
 }
@@ -32,7 +32,7 @@ Describe "Testing Get-TimeZoneInformationRegistrySettings" {
     $results = Get-TimeZoneInformationRegistrySettings -MachineName $env:COMPUTERNAME
 
     It "Returned an object" {
-        $results | Should not be $null 
+        $results | Should not be $null
     }
 
     It "DynamicDaylightTimeDisabled is 0" {
@@ -40,6 +40,6 @@ Describe "Testing Get-TimeZoneInformationRegistrySettings" {
     }
 
     It "TimeZoneKeyName not null" {
-        $results.TimeZoneKeyName | should not be $null
-    } 
+        $results.TimeZoneKeyName | Should not be $null
+    }
 }

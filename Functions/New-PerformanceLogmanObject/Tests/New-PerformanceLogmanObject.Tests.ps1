@@ -1,38 +1,37 @@
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification = 'Testing')]
+[CmdletBinding()]
+param()
+
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.','.'
-$here = $here.Replace("\Tests","")
+$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
+$here = $here.Replace("\Tests", "")
 . "$here\$sut"
 
 #Load Required Functions
 
-$content = Get-Content "$here\$sut" 
-$foundRequiredFunctions = $false 
-foreach($line in $content)
-{
-    if($foundRequiredFunctions)
-    {
-        if($line.Contains("#>"))
-        {
-            break 
+$content = Get-Content "$here\$sut"
+$foundRequiredFunctions = $false
+foreach ($line in $content) {
+    if ($foundRequiredFunctions) {
+        if ($line.Contains("#>")) {
+            break
         }
         $webRequest = Invoke-WebRequest $line.Trim()
-        if($webRequest -ne $null -and $webRequest.Content)
-        {
-            Invoke-Expression $webRequest.Content 
+        if ($null -ne $webRequest -and
+            $webRequest.Content) {
+            Invoke-Expression $webRequest.Content
         }
     }
-    if($line.Contains("Required Functions:"))
-    {
-        $foundRequiredFunctions = $true 
+    if ($line.Contains("Required Functions:")) {
+        $foundRequiredFunctions = $true
         continue
     }
 }
 $outputLocation = "{0}\{1}" -f (Split-Path -Parent $MyInvocation.MyCommand.Path), "PesterTests.Ignore"
-if(!(Test-Path $outputLocation))
-{
+if (!(Test-Path $outputLocation)) {
     New-Item $outputLocation -ItemType Directory | Out-Null
 }
-$counters = @("\Processor(*)\*","\Process(*)\*")
+$counters = @("\Processor(*)\*", "\Process(*)\*")
 $name = "PesterTesting"
 
 Describe "Testing New-PerformanceLogmanObject" {
@@ -48,7 +47,7 @@ Describe "Testing New-PerformanceLogmanObject" {
         It "Starting Logman" {
             $perfObject.StartLogman() | Should Be "Success"
         }
-        Sleep 5 
+        Start-Sleep 5
         It "Stopping Logman" {
             $perfObject.StopLogman() | Should Be "Success"
         }

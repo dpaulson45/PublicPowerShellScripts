@@ -1,52 +1,54 @@
 Function Load-PerformanceCounters {
-[CmdletBinding()]
-param(
-[Parameter(Mandatory=$true,ParameterSetName="Directory")][string]$Directory,
-[Parameter(Mandatory=$true,ParameterSetName="FilePaths")][array]$FilePaths,
-[Parameter(Mandatory=$false)][Int64]$MaxSample = [Int64]::MaxValue, 
-[Parameter(Mandatory=$false)][datetime]$StartTime = [datetime]::MinValue, 
-[Parameter(Mandatory=$false)][datetime]$EndTime = [datetime]::MaxValue,
-[Parameter(Mandatory=$false)][array]$Counters
-)
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Bug inside of PSScriptAnalyzer')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'I like Load instead of import at the moment')]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true, ParameterSetName = "Directory")][string]$Directory,
+        [Parameter(Mandatory = $true, ParameterSetName = "FilePaths")][array]$FilePaths,
+        [Parameter(Mandatory = $false)][Int64]$MaxSample = [Int64]::MaxValue,
+        [Parameter(Mandatory = $false)][datetime]$StartTime = [datetime]::MinValue,
+        [Parameter(Mandatory = $false)][datetime]$EndTime = [datetime]::MaxValue,
+        [Parameter(Mandatory = $false)][array]$Counters
+    )
 
-#Function Version 1.6
-<# 
-Required Functions: 
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
-#>
+    #Function Version 1.7
+    <#
+    Required Functions:
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
+    #>
 
-Add-Type @"
+    Add-Type @"
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using Microsoft.PowerShell.Commands.GetCounter; 
+using Microsoft.PowerShell.Commands.GetCounter;
 
 namespace LoadPerformanceCounters
 {
     public class CounterAccuracy
     {
-        public double Percentage; 
+        public double Percentage;
         public int SumDataPoints;
-        public int EstimateDataPoints; 
+        public int EstimateDataPoints;
 
         public CounterAccuracy()
         {
-            this.Percentage = 0; 
-            this.SumDataPoints = 0; 
-            this.EstimateDataPoints = 0; 
+            this.Percentage = 0;
+            this.SumDataPoints = 0;
+            this.EstimateDataPoints = 0;
         }
     }
 
     public class PerformanceCounterName
     {
-        public string FullName; 
-        public string ServerName; 
-        public string ObjectName; 
-        public string InstanceName; 
-        public string CounterName; 
+        public string FullName;
+        public string ServerName;
+        public string ObjectName;
+        public string InstanceName;
+        public string CounterName;
 
         public PerformanceCounterName()
         {
@@ -57,7 +59,7 @@ namespace LoadPerformanceCounters
         {
             this.FullName = info.FullName;
             this.ServerName = info.ServerName;
-            this.ObjectName = info.ObjectName; 
+            this.ObjectName = info.ObjectName;
             this.InstanceName = info.InstanceName;
             this.CounterName = info.CounterName;
         }
@@ -70,15 +72,15 @@ namespace LoadPerformanceCounters
             string instanceName = string.Empty;
             if(endOfCounterObjectIndex == -1)
             {
-                endOfCounterObjectIndex = startOfCounterIndex - 1; 
+                endOfCounterObjectIndex = startOfCounterIndex - 1;
             }
             if((FullName.Contains("(")) && (FullName.Contains("#")))
             {
                 instanceName = FullName.Substring(endOfCounterObjectIndex + 1, (FullName.IndexOf(")") - endOfCounterObjectIndex -1));
             }
-            else 
+            else
             {
-                instanceName = SampleInstanceName; 
+                instanceName = SampleInstanceName;
             }
 
             PerformanceCounterName performanceCounterNameObj = new PerformanceCounterName
@@ -88,7 +90,7 @@ namespace LoadPerformanceCounters
                 ObjectName = FullName.Substring(endOfServerIndex + 1, endOfCounterObjectIndex - endOfServerIndex - 1),
                 InstanceName = instanceName,
                 CounterName = FullName.Substring(startOfCounterIndex)
-            }; 
+            };
 
             return performanceCounterNameObj;
         }
@@ -96,10 +98,10 @@ namespace LoadPerformanceCounters
 
     public class CounterData : PerformanceCounterName
     {
-        public CounterAccuracy Accuracy; 
-        public List<PerformanceCounterSample> AllData; 
+        public CounterAccuracy Accuracy;
+        public List<PerformanceCounterSample> AllData;
         public int GetDataCount { get { return AllData.Count() - 1;  } }
-        public Dictionary<DateTime,PerformanceCounterSample> TimeHash; 
+        public Dictionary<DateTime,PerformanceCounterSample> TimeHash;
         public IEnumerable<PerformanceCounterSample> GetData { get {return AllData.Skip(1); } }
         public PerformanceCounterSample FirstSample {get {return GetData.First(); } }
         public PerformanceCounterSample LastSample {get {return GetData.Last(); } }
@@ -125,29 +127,29 @@ namespace LoadPerformanceCounters
             this.Accuracy = new CounterAccuracy();
             this.TimeHash = new Dictionary<DateTime,PerformanceCounterSample>();
             //this.AllData = new List<PerformanceCounterSample>();
-            this.AllData = data; 
+            this.AllData = data;
             foreach(PerformanceCounterSample datapoint in this.GetData)
             {
-                try 
+                try
                 {
-                    this.TimeHash.Add(datapoint.Timestamp, datapoint); 
+                    this.TimeHash.Add(datapoint.Timestamp, datapoint);
                 }
-                catch 
+                catch
                 {
                     //Do nothing, it appears that this sometimes happens, likely due to multiple files in the load
-                    //Might need to look into some debug logging to determine if this is going to be an issue or not 
+                    //Might need to look into some debug logging to determine if this is going to be an issue or not
                 }
             }
         }
 
     }
-    
+
     public class PerformanceCounters
     {
-        private Array timeKeys; 
+        private Array timeKeys;
         private Array counterKeys;
         private Dictionary<string, Dictionary<string, List<string>>> counterKeysGrouping;
-        
+
         public string ServerName;
         public Dictionary<string, CounterData> AllCounterData;
         public Array GetTimeKeys {get {return this.timeKeys;} }
@@ -161,19 +163,19 @@ namespace LoadPerformanceCounters
             this.AllCounterData = AllCounterData;
             this.timeKeys = TimeKeys;
             this.counterKeys = CounterKeys;
-            this.counterKeysGrouping = CounterKeysGrouping; 
+            this.counterKeysGrouping = CounterKeysGrouping;
         }
 
         private bool TryGetCounterInternal(ref string ObjectName, ref string CounterName)
         {
             ObjectName = ObjectName.ToLower();
             CounterName = CounterName.ToLower();
-            if(this.counterKeysGrouping.ContainsKey(ObjectName) && 
+            if(this.counterKeysGrouping.ContainsKey(ObjectName) &&
                 this.counterKeysGrouping[ObjectName].ContainsKey(CounterName))
             {
                 return true;
             }
-            return false; 
+            return false;
         }
 
         public bool TryGetCounterKey(string ObjectName, string CounterName, string InstanceName, out string Key)
@@ -192,9 +194,9 @@ namespace LoadPerformanceCounters
                 }
                 return false;
             }
-            else 
+            else
             {
-                return false; 
+                return false;
             }
         }
 
@@ -204,9 +206,9 @@ namespace LoadPerformanceCounters
             if(TryGetCounterInternal(ref ObjectName, ref CounterName))
             {
                 Key = this.counterKeysGrouping[ObjectName][CounterName][0];
-                return true; 
+                return true;
             }
-            else 
+            else
             {
                 return false;
             }
@@ -219,93 +221,81 @@ namespace LoadPerformanceCounters
             {
                 foreach(string key in this.counterKeysGrouping[ObjectName][CounterName])
                 {
-                    Keys.Add(key); 
+                    Keys.Add(key);
                 }
-                return true; 
+                return true;
             }
-            return false; 
+            return false;
         }
 
         public static  Dictionary<string, List<PerformanceCounterSample>> GroupPerformanceCounterSamplesByPath(object[] AllCounters)
         {
             Dictionary<string, List<PerformanceCounterSample>> dictionaryGroup = new Dictionary<string, List<PerformanceCounterSample>>();
-            int i = 0; 
+            int i = 0;
             while(i < AllCounters.Count())
             {
-                PerformanceCounterSample datapoint = AllCounters[i++] as PerformanceCounterSample; 
+                PerformanceCounterSample datapoint = AllCounters[i++] as PerformanceCounterSample;
                 string key = datapoint.Path;
                 if(!(dictionaryGroup.ContainsKey(key)))
                 {
                     dictionaryGroup.Add(key, new System.Collections.Generic.List<PerformanceCounterSample>());
-                    
                 }
                 dictionaryGroup[key].Add(datapoint);
             }
             return dictionaryGroup;
         }
     }
-    
 }
 "@ -ReferencedAssemblies "Microsoft.PowerShell.Commands.Diagnostics, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35"
 
-if($PSBoundParameters.ContainsKey('Directory'))
-{
-    $FilePaths = (Get-ChildItem $Directory | ?{$_.Extension -eq ".blg"}).VersionInfo.FileName
-}
-foreach($filePath in $FilePaths)
-{
-    if(!(Test-Path $filePath))
-    {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid files"
+    if ($PSBoundParameters.ContainsKey('Directory')) {
+        $FilePaths = (Get-ChildItem $Directory | Where-Object { $_.Extension -eq ".blg" }).VersionInfo.FileName
     }
-}
-[System.Diagnostics.Stopwatch]$stopWatchTotal = [System.Diagnostics.Stopwatch]::StartNew()
-$importCounters = Import-PerformanceCounters -FilePaths $FilePaths -MaxSample $MaxSample -StartTime $StartTime -EndTime $EndTime -Counters $Counters 
-$measureGroupTime = Measure-Command { $hashtableGroup = [LoadPerformanceCounters.PerformanceCounters]::GroupPerformanceCounterSamplesByPath($importCounters) }
-Write-VerboseWriter("[{0}]: Took {1} seconds to group the path data" -f [datetime]::Now, $measureGroupTime.TotalSeconds)
-[System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
-[System.Collections.Generic.Dictionary[string, LoadPerformanceCounters.CounterData]]$dictionaryAllCounterData = New-Object 'System.Collections.Generic.Dictionary[string, LoadPerformanceCounters.CounterData]'
-[System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]]]$hashtableCounterObjectGrouping = New-Object 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]]'
-$monitor = New-Object PSCustomObject
-$monitor | Add-Member -MemberType NoteProperty -Name "TimeHashCount" -Value 0
-$monitor | Add-Member -MemberType NoteProperty -Name "Key" -Value ([string]::Empty)
-$monitor | Add-Member -MemberType NoteProperty -Name "ContainsMinValue" -Value $false
-$monitor | Add-Member -MemberType NoteProperty -Name "ServerName" -Value ([string]::Empty)
+    foreach ($filePath in $FilePaths) {
+        if (!(Test-Path $filePath)) {
+            throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid files"
+        }
+    }
+    [System.Diagnostics.Stopwatch]$stopWatchTotal = [System.Diagnostics.Stopwatch]::StartNew()
+    $importCounters = Import-PerformanceCounters -FilePaths $FilePaths -MaxSample $MaxSample -StartTime $StartTime -EndTime $EndTime -Counters $Counters
+    $measureGroupTime = Measure-Command { $hashtableGroup = [LoadPerformanceCounters.PerformanceCounters]::GroupPerformanceCounterSamplesByPath($importCounters) }
+    Write-VerboseWriter("[{0}]: Took {1} seconds to group the path data" -f [datetime]::Now, $measureGroupTime.TotalSeconds)
+    [System.Diagnostics.Stopwatch]$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+    [System.Collections.Generic.Dictionary[string, LoadPerformanceCounters.CounterData]]$dictionaryAllCounterData = New-Object 'System.Collections.Generic.Dictionary[string, LoadPerformanceCounters.CounterData]'
+    [System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string, System.Collections.Generic.List[string]]]]$hashtableCounterObjectGrouping = New-Object 'System.Collections.Generic.Dictionary[string, System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]]'
+    $monitor = New-Object PSCustomObject
+    $monitor | Add-Member -MemberType NoteProperty -Name "TimeHashCount" -Value 0
+    $monitor | Add-Member -MemberType NoteProperty -Name "Key" -Value ([string]::Empty)
+    $monitor | Add-Member -MemberType NoteProperty -Name "ContainsMinValue" -Value $false
+    $monitor | Add-Member -MemberType NoteProperty -Name "ServerName" -Value ([string]::Empty)
 
-#TODO: Add multi threading here.
-foreach($key in $hashtableGroup.Keys)
-{
-    $counterObj =  New-Object LoadPerformanceCounters.CounterData([LoadPerformanceCounters.PerformanceCounterName]::GetPerformanceCounterNameFromFullName($hashtableGroup[$key][0].Path, $hashtableGroup[$key][0].InstanceName), $hashtableGroup[$key])
-    $dictionaryAllCounterData.Add($key, $counterObj)
-    if($monitor.ServerName -eq ([string]::Empty))
-    {
-        $monitor.ServerName = $counterObj.ServerName
+    #TODO: Add multi threading here.
+    foreach ($key in $hashtableGroup.Keys) {
+        $counterObj = New-Object LoadPerformanceCounters.CounterData([LoadPerformanceCounters.PerformanceCounterName]::GetPerformanceCounterNameFromFullName($hashtableGroup[$key][0].Path, $hashtableGroup[$key][0].InstanceName), $hashtableGroup[$key])
+        $dictionaryAllCounterData.Add($key, $counterObj)
+        if ($monitor.ServerName -eq ([string]::Empty)) {
+            $monitor.ServerName = $counterObj.ServerName
+        } elseif ($monitor.ServerName -ne $counterObj.ServerName) {
+            throw "Server Name Mismatch"
+        }
+        if (!($hashtableCounterObjectGrouping.ContainsKey($counterObj.ObjectName))) {
+            $hashtableCounterObjectGrouping.Add($counterObj.ObjectName.ToLower(), (New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'))
+        }
+        if (!($hashtableCounterObjectGrouping[$counterObj.ObjectName].ContainsKey($counterObj.CounterName))) {
+            $hashtableCounterObjectGrouping[$counterObj.ObjectName].Add($counterObj.CounterName.ToLower(), (New-Object System.Collections.Generic.List[string]))
+        }
+        $hashtableCounterObjectGrouping[$counterObj.ObjectName][$counterObj.CounterName].Add($key)
+        if ($counterObj.TimeHash.Count -gt $monitor.TimeHashCount -or
+            ($monitor.Key -eq [string]::Empty -or
+                $monitor.ContainsMinValue)) {
+            $monitor.TimeHashCount = $counterObj.TimeHash.Count
+            $monitor.Key = $key
+            $monitor.ContainsMinValue = $dictionaryAllCounterData[$monitor.Key].TimeHash.ContainsKey([DateTime]::MinValue)
+        }
     }
-    elseif($monitor.ServerName -ne $counterObj.ServerName)
-    {
-        throw "Server Name Mismatch"
-    }
-    if(!($hashtableCounterObjectGrouping.ContainsKey($counterObj.ObjectName)))
-    {
-        $hashtableCounterObjectGrouping.Add($counterObj.ObjectName.ToLower(), (New-Object 'System.Collections.Generic.Dictionary[string,System.Collections.Generic.List[string]]'))
-    }
-    if(!($hashtableCounterObjectGrouping[$counterObj.ObjectName].ContainsKey($counterObj.CounterName)))
-    {
-        $hashtableCounterObjectGrouping[$counterObj.ObjectName].Add($counterObj.CounterName.ToLower(),(New-Object System.Collections.Generic.List[string]))
-    }
-    $hashtableCounterObjectGrouping[$counterObj.ObjectName][$counterObj.CounterName].Add($key)
-    if($counterObj.TimeHash.Count -gt $monitor.TimeHashCount -or
-        ($monitor.Key -eq [string]::Empty -or 
-        $monitor.ContainsMinValue))
-    {
-        $monitor.TimeHashCount = $counterObj.TimeHash.Count 
-        $monitor.Key = $key
-        $monitor.ContainsMinValue = $dictionaryAllCounterData[$monitor.Key].TimeHash.ContainsKey([DateTime]::MinValue)
-    }
-}
-$returnObject = New-Object LoadPerformanceCounters.PerformanceCounters(($monitor.ServerName), $dictionaryAllCounterData, ([array]$dictionaryAllCounterData[$monitor.Key].TimeHash.Keys | Sort-Object), ([array]$dictionaryAllCounterData.Keys), $hashtableCounterObjectGrouping)
-Write-VerboseWriter("[{0}]: Additional time taken to add TimeHash {1} seconds" -f [datetime]::Now, $secondsTimeHash)
-Write-VerboseWriter("[{0}]: Finished building objects off the data. Completed in {1} seconds" -f [datetime]::Now, $stopWatch.Elapsed.TotalSeconds)
-Write-VerboseWriter("[{0}]: Total time taken {1} seconds" -f [datetime]::Now, $stopWatchTotal.Elapsed.TotalSeconds)
-return $returnObject
+    $returnObject = New-Object LoadPerformanceCounters.PerformanceCounters(($monitor.ServerName), $dictionaryAllCounterData, ([array]$dictionaryAllCounterData[$monitor.Key].TimeHash.Keys | Sort-Object), ([array]$dictionaryAllCounterData.Keys), $hashtableCounterObjectGrouping)
+    Write-VerboseWriter("[{0}]: Additional time taken to add TimeHash {1} seconds" -f [datetime]::Now, $secondsTimeHash)
+    Write-VerboseWriter("[{0}]: Finished building objects off the data. Completed in {1} seconds" -f [datetime]::Now, $stopWatch.Elapsed.TotalSeconds)
+    Write-VerboseWriter("[{0}]: Total time taken {1} seconds" -f [datetime]::Now, $stopWatchTotal.Elapsed.TotalSeconds)
+    return $returnObject
 }
