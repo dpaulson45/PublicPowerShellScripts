@@ -8,7 +8,7 @@ Function Import-ScriptConfigFile {
     #Function Version 1.2
     <#
     Required Functions:
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
 
     Write-VerboseWriter("Calling: Import-ScriptConfigFile")

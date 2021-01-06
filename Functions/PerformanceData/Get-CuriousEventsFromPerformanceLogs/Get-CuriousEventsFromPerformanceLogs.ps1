@@ -11,10 +11,10 @@ Function Get-CuriousEventsFromPerformanceLogs {
     #Function Version 1.2
     <#
     Required Functions:
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-HostWriter.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Export-PerformanceDataToCSVFile/Export-PerformanceDataToCSVFile.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/New-CounterDataObject/New-CounterDataObject.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-HostWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/PerformanceData/Export-PerformanceDataToCSVFile/Export-PerformanceDataToCSVFile.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/PerformanceData/New-CounterDataObject/New-CounterDataObject.ps1
     #>
     <#
     [hashtable]LoadedPerfObject - return object from Load-PerformanceCounters:  https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1

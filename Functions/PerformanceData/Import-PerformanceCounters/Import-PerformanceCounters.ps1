@@ -12,7 +12,7 @@ Function Import-PerformanceCounters {
     #Function Version 1.7
     <#
     Required Functions:
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
     #If Load-PerformanceCounters isn't issued within the script, must use the schema from: https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/AddTypeSchema/LoadPerformanceCounters_Schema.ps1
     <#

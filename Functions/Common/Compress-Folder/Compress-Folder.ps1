@@ -12,8 +12,8 @@ Function Compress-Folder {
     #Function Version 1.5
     <#
     Required Functions:
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
     #>
 
     Function Get-DirectorySize {

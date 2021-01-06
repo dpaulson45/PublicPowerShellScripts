@@ -9,9 +9,9 @@ Function Get-AllNicInformation {
     #Function Version 1.7
     <#
     Required Functions:
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Get-WmiObjectHandler/Get-WmiObjectHandler.ps1
-        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Invoke-RegistryGetValue/Invoke-RegistryGetValue.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Get-WmiObjectHandler/Get-WmiObjectHandler.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/ComputerInformation/Invoke-RegistryGetValue/Invoke-RegistryGetValue.ps1
     #>
     Write-VerboseWriter("Calling: Get-AllNicInformation")
     Write-VerboseWriter("Passed [string]ComputerName: {0} | [string]ComputerFQDN: {1}" -f $ComputerName, $ComputerFQDN)
