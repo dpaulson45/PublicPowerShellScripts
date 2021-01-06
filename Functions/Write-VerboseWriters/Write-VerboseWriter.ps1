@@ -1,18 +1,13 @@
-#Function Version 1.1
+#Function Version 1.2
 Function Write-VerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($Script:Logger -ne $null)
-    {
+    param(
+        [Parameter(Mandatory = $true)][string]$WriteString
+    )
+    if ($null -ne $Script:Logger) {
         $Script:Logger.WriteHost($WriteString)
-    }
-    elseif($VerboseFunctionCaller -eq $null)
-    {
+    } elseif ($null -eq $VerboseFunctionCaller) {
         Write-Verbose $WriteString
-    }
-    else 
-    {
+    } else {
         &$VerboseFunctionCaller $WriteString
     }
 }

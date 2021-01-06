@@ -1,15 +1,12 @@
-#Function Version 1.1
+#Function Version 1.2
 Function Write-InvokeCommandReturnVerboseWriter {
-param(
-[Parameter(Mandatory=$true)][string]$WriteString
-)
-    if($InvokeCommandReturnWriteArray)
-    {
-        $hashTable = @{"Verbose"=("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString)}
+    param(
+        [Parameter(Mandatory = $true)][string]$WriteString
+    )
+    if ($InvokeCommandReturnWriteArray) {
+        $hashTable = @{"Verbose" = ("[Remote Server: {0}] : {1}" -f $env:COMPUTERNAME, $WriteString) }
         Set-Variable stringArray -Value ($Script:stringArray += $hashTable) -Scope Script
-    }
-    else 
-    {
+    } else {
         Write-VerboseWriter($WriteString)
     }
 }
