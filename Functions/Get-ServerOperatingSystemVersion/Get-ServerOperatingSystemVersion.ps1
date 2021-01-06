@@ -6,7 +6,7 @@ Function Get-ServerOperatingSystemVersion {
         [string]$OsCaption
     )
 
-    #Function Version 1.6
+    #Function Version 1.7
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Write-VerboseWriters/Write-VerboseWriter.ps1
@@ -30,6 +30,8 @@ Function Get-ServerOperatingSystemVersion {
         "*Server 2012*" { $osReturnValue = "Windows2012" }
         "*Server 2016*" { $osReturnValue = "Windows2016" }
         "*Server 2019*" { $osReturnValue = "Windows2019" }
+        "Microsoft Windows Server Standard" { $osReturnValue = "WindowsCore" }
+        "Microsoft Windows Server Datacenter" { $osReturnValue = "WindowsCore" }
         default { $osReturnValue = "Unknown" }
     }
 
