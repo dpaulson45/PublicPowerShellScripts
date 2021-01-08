@@ -44,8 +44,8 @@ Function Confirm-ExchangeShell {
         }
 
         #Test 32 bit process, as we can't see the registry if that is the case.
-        if ([System.Environment]::Is64BitProcess) {
-            Write-HostWriter("Open a 32 bit PowerShell process to continue")
+        if (![System.Environment]::Is64BitProcess) {
+            Write-HostWriter("Open a 64 bit PowerShell process to continue")
             return $false
         }
 
@@ -55,7 +55,7 @@ Function Confirm-ExchangeShell {
             Write-VerboseWriter("We are on Exchange 2013 or newer")
 
             try {
-                if (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v14\EdgeTransportRol') {
+                if (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\EdgeTransportRole') {
                     Write-VerboseWriter("We are on Exchange Edge Transport Server")
                     [xml]$PSSnapIns = Get-Content -Path "$env:ExchangeInstallPath\Bin\exshell.psc1" -ErrorAction Stop
 
@@ -71,7 +71,7 @@ Function Confirm-ExchangeShell {
                 }
 
                 Write-VerboseWriter("Imported Module. Trying Get-Exchange Server Again")
-                Get-ExchangeServer -ErrorAction | Out-Null
+                Get-ExchangeServer -ErrorAction Stop| Out-Null
                 $passed = $true
                 Write-VerboseWriter("Successfully loaded Exchange Management Shell")
 
