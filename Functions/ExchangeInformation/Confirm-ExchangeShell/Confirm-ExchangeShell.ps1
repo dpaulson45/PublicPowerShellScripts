@@ -71,7 +71,7 @@ Function Confirm-ExchangeShell {
                 }
 
                 Write-VerboseWriter("Imported Module. Trying Get-Exchange Server Again")
-                Get-ExchangeServer -ErrorAction | Out-Null
+                Get-ExchangeServer -ErrorAction Stop| Out-Null
                 $passed = $true
                 Write-VerboseWriter("Successfully loaded Exchange Management Shell")
 
