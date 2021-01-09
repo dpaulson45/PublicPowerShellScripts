@@ -4,11 +4,11 @@ Function Get-ServerType {
     param(
         [Parameter(Mandatory = $true)][string]$ServerType
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
+
     Write-VerboseWriter("Calling: Get-ServerType")
     $returnServerType = [string]::Empty
     if ($ServerType -like "VMware*") { $returnServerType = "VMware" }

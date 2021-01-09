@@ -4,8 +4,6 @@ Function Export-PerformanceDataToCSVFile {
         [Parameter(Mandatory = $true)][hashtable]$LoadedPerfObject,
         [Parameter(Mandatory = $true)][string]$FullSavePath
     )
-
-    #Function Version 1.2
     #[hashtable]LoadedPerfObject - return object from Load-PerformanceCounters:  https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Import-PerformanceCounters/Import-PerformanceCounters.ps1
 
     if (Test-Path $FullSavePath) {

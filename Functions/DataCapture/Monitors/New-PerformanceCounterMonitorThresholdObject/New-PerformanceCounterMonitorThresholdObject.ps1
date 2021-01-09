@@ -13,7 +13,6 @@ Function New-PerformanceCounterMonitorThresholdObject {
         [scriptblock]$HostFunctionCaller,
         [scriptblock]$VerboseFunctionCaller
     )
-    #Function Version 1.8
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-ScriptMethodHostWriter.ps1

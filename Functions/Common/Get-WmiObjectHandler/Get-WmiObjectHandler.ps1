@@ -8,11 +8,11 @@ Function Get-WmiObjectHandler {
         [Parameter(Mandatory = $false)][string]$Namespace,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
+
     Write-VerboseWriter("Calling: Get-WmiObjectHandler")
     Write-VerboseWriter("Passed: [string]ComputerName: {0} | [string]Class: {1} | [string]Filter: {2} | [string]Namespace: {3}" -f $ComputerName, $Class, $Filter, $Namespace)
     $execute = @{

@@ -1,4 +1,4 @@
-#Function Version 1.2
+
 Function Write-HostWriter {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Need to use Write Host')]
     param(

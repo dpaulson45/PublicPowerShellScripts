@@ -5,8 +5,6 @@ Function Get-ServerOperatingSystemVersion {
     param(
         [string]$OsCaption
     )
-
-    #Function Version 1.7
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

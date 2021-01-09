@@ -6,8 +6,6 @@ Function Get-DotNetDllFileVersions {
         [array]$FileNames,
         [scriptblock]$CatchActionFunction
     )
-
-    #Function Version 1.3
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

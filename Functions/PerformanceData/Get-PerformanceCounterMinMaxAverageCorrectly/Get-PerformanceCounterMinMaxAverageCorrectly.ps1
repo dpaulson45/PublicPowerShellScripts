@@ -3,8 +3,6 @@ Function Get-PerformanceCounterMinMaxAverageCorrectly {
     param(
         [object]$PerformanceCounterSamples
     )
-
-    #Function Version 1.1
     <#
     Calculate Averages
     Average calculation for Average counters taken from these references:

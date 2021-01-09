@@ -7,8 +7,6 @@ Function Save-DataToFile {
         [Parameter(Mandatory = $false)][bool]$SaveTextFile = $true,
         [Parameter(Mandatory = $false)][bool]$SaveXMLFile = $true
     )
-
-    #Function Version 1.4
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

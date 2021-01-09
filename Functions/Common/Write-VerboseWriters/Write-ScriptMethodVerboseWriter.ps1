@@ -1,4 +1,3 @@
-#Function Version 1.1
 Function Write-ScriptMethodVerboseWriter {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Need to use Write Host')]
     param(

@@ -21,7 +21,6 @@ Function New-PerformanceLogmanObject {
         [scriptblock]$HostFunctionCaller,
         [scriptblock]$VerboseFunctionCaller
     )
-    #Function Version 1.4
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-ScriptMethodHostWriter.ps1

@@ -4,7 +4,6 @@ Function Get-ProcessorInformation {
         [Parameter(Mandatory = $true)][string]$MachineName,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

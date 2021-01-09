@@ -4,8 +4,6 @@ Function Get-CounterSampleToCounterObjectName {
         [Parameter(Mandatory = $true)][object]$PerformanceCounterSample
     )
 
-    #Function Version 1.3
-
     $counterObj = New-Object -TypeName PSCustomObject
     $FullName = $PerformanceCounterSample.Path
     #\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\avg. disk sec/read

@@ -4,7 +4,6 @@ Function Get-CounterFullNameToCounterObjectName {
         [Parameter(Mandatory = $true)][string]$FullCounterName
     )
 
-    #Function Version 1.2
     $counterObject = New-Object -TypeName PSCustomObject
 
     #\\adt-e2k13aio1\logicaldisk(harddiskvolume1)\avg. disk sec/read

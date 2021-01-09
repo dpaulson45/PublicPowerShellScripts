@@ -19,7 +19,6 @@ Function New-StorportLogmanObject {
     )
 
     #Following this blog: https://blogs.technet.microsoft.com/askcore/2013/04/25/tracing-with-storport-in-windows-2012-and-windows-8-with-kb2819476-hotfix/
-    #Function Version 1.3
     if ([string]::IsNullOrEmpty($LogmanName.Trim())) {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName"
     }

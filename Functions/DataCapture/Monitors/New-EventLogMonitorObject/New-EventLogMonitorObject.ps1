@@ -18,8 +18,6 @@ Function New-EventLogMonitorObject {
         [Parameter(Mandatory = $false)][scriptblock]$HostFunctionCaller,
         [Parameter(Mandatory = $false)][scriptblock]$VerboseFunctionCaller
     )
-
-    #Function Version 1.7
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-ScriptMethodHostWriter.ps1

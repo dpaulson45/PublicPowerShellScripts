@@ -1,4 +1,3 @@
-#Function Version 1.2
 Function Write-InvokeCommandReturnHostWriter {
     param(
         [Parameter(Mandatory = $true)][string]$WriteString
