@@ -4,12 +4,12 @@ Function Get-ServerRebootPending {
         [Parameter(Mandatory = $true)][string]$ServerName,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
     )
-    #Function Version 1.2
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Invoke-ScriptBlockHandler/Invoke-ScriptBlockHandler.ps1
     #>
+
     Function Get-PendingFileReboot {
         try {
             if ((Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\" -Name PendingFileRenameOperations -ErrorAction Stop)) {

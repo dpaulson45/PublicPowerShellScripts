@@ -12,7 +12,7 @@ Function New-MailMessageObject {
         [Parameter(Mandatory = $false)][string]$CustomTestMessageSubject = "Script Mail Message Object Test",
         [Parameter(Mandatory = $false)][string]$CustomTestMessageBody = "Test Worked!"
     )
-    #Function Version 1.4
+
     Add-Type -TypeDefinition @"
     namespace MailMessage
     {

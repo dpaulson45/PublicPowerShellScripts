@@ -4,8 +4,6 @@ Function Import-ScriptConfigFile {
         [Parameter(Mandatory = $true)][string]$ScriptConfigFileLocation,
         [Parameter(Mandatory = $false)][string]$MainSplitLineValue = "~"
     )
-
-    #Function Version 1.2
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

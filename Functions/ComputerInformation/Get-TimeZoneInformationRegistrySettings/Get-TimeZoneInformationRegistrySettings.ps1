@@ -4,12 +4,12 @@ Function Get-TimeZoneInformationRegistrySettings {
         [string]$MachineName = $env:COMPUTERNAME,
         [scriptblock]$CatchActionFunction
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/ComputerInformation/Invoke-RegistryGetValue/Invoke-RegistryGetValue.ps1
     #>
+
     Write-VerboseWriter("Calling: Get-TimeZoneInformationRegistrySettings")
     Write-VerboseWriter("Passed: [string]MachineName: {0}" -f $MachineName)
     $timeZoneInformationSubKey = "SYSTEM\CurrentControlSet\Control\TimeZoneInformation"

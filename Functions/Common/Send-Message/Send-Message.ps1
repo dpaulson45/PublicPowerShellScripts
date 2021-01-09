@@ -13,7 +13,6 @@ Function Send-Message {
         [Parameter(Mandatory = $false)][int]$Port = 25
     )
 
-    #Function Version 1.2
     $messageError = $false
 
     try {

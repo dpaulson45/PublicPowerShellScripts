@@ -13,7 +13,6 @@ Function New-ExtraLogmanObject {
         [Parameter(Mandatory = $false)][array]$ExtraTraceConfigFileContent
     )
 
-    #Function Version 1.5
     if ([string]::IsNullOrEmpty($LogmanName.Trim())) {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogmanName"
     }

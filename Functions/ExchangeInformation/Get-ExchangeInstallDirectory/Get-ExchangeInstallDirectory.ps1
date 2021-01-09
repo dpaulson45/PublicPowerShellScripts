@@ -4,13 +4,12 @@ Function Get-ExchangeInstallDirectory {
     param(
         [Parameter(Mandatory = $false)][bool]$InvokeCommandReturnWriteArray
     )
-
-    #Function Version 1.3
     <#
-Required Functions:
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
-    https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
-#>
+    Required Functions:
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
+        https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
+    #>
+
     $stringArray = @()
     Write-InvokeCommandReturnVerboseWriter("Calling: Get-ExchangeInstallDirectory")
     Write-InvokeCommandReturnVerboseWriter("Passed: [bool]InvokeCommandReturnWriteArray: {0}" -f $InvokeCommandReturnWriteArray)

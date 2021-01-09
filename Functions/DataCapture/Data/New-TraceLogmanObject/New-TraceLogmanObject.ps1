@@ -20,7 +20,6 @@ Function New-TraceLogmanObject {
         [scriptblock]$HostFunctionCaller,
         [scriptblock]$VerboseFunctionCaller
     )
-    #Function Version 1.2
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-ScriptMethodHostWriter.ps1

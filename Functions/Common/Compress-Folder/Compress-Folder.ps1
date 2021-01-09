@@ -8,8 +8,6 @@ Function Compress-Folder {
         [Parameter(Mandatory = $false)][bool]$ReturnCompressedLocation = $false,
         [Parameter(Mandatory = $false, Position = 1)][object]$PassedObjectParameter
     )
-
-    #Function Version 1.5
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1

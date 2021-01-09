@@ -9,7 +9,6 @@ Function Get-PerformanceThresholdCounters {
         [string]$ThresholdType,
         [System.Management.Automation.ActionPreference]$ActionPreference = "SilentlyContinue"
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

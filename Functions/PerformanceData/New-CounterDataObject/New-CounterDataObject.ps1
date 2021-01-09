@@ -5,8 +5,6 @@ Function New-CounterDataObject {
     param(
         [Parameter(Mandatory = $true)][array]$PerformanceCounterSamples
     )
-
-    #Function Version 1.3
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/PerformanceData/Get-CounterSampleToCounterObjectName/Get-CounterSampleToCounterObjectName.ps1

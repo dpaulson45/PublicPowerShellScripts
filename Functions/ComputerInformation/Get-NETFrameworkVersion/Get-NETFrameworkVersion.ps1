@@ -5,7 +5,6 @@ Function Get-NETFrameworkVersion {
         [int]$NetVersionKey = -1,
         [scriptblock]$CatchActionFunction
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

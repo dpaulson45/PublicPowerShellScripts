@@ -6,13 +6,12 @@ Function Get-FreeSpace {
         [Parameter(Mandatory = $false)][ValidateScript( { $_.ToString().EndsWith("\") })][string]$FilePath,
         [Parameter(Mandatory = $false, Position = 1)][object]$PassedObjectParameter
     )
-
-    #Function Version 1.4
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-InvokeCommandReturnHostWriter.ps1
     #>
+
     if ($null -ne $PassedObjectParameter) {
         if ($null -ne $PassedObjectParameter.FilePath) {
             $FilePath = $PassedObjectParameter.FilePath

@@ -8,7 +8,6 @@ Function Invoke-ScriptBlockHandler {
         [Parameter(Mandatory = $false)][bool]$IncludeNoProxyServerOption,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
     )
-    #Function Version 1.2
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

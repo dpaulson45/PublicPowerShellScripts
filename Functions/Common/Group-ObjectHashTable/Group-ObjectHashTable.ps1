@@ -4,7 +4,7 @@ Function Group-ObjectHashTable {
         [string[]]
         $Property
     )
-    #Function Version 1.1
+
     #Found from: http://powershell.one/tricks/performance/group-object
     begin {
         # create an empty hashtable

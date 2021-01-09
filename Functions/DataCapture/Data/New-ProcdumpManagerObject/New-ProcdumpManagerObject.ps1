@@ -18,7 +18,6 @@ Function New-ProcdumpManagerObject {
         [scriptblock]$VerboseFunctionCaller
     )
     #This Script requires Invoke-Command to be able to be run, even locally.
-    #Function Version 1.2
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-ScriptMethodHostWriter.ps1

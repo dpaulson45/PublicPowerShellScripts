@@ -8,8 +8,6 @@ Function New-Folder {
         [Parameter(Mandatory = $false)][bool]$IncludeDisplayCreate,
         [Parameter(Mandatory = $false, Position = 1)][object]$PassedParametersObject
     )
-
-    #Function Version 1.6
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-InvokeCommandReturnVerboseWriter.ps1

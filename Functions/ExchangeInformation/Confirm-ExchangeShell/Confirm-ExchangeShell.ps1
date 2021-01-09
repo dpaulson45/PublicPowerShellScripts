@@ -7,7 +7,6 @@ Function Confirm-ExchangeShell {
         [Parameter(Mandatory = $false)][bool]$LoadExchangeShell = $true,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
     )
-    #Function Version 1.9
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-HostWriters/Write-HostWriter.ps1
@@ -71,7 +70,7 @@ Function Confirm-ExchangeShell {
                 }
 
                 Write-VerboseWriter("Imported Module. Trying Get-Exchange Server Again")
-                Get-ExchangeServer -ErrorAction Stop| Out-Null
+                Get-ExchangeServer -ErrorAction Stop | Out-Null
                 $passed = $true
                 Write-VerboseWriter("Successfully loaded Exchange Management Shell")
 

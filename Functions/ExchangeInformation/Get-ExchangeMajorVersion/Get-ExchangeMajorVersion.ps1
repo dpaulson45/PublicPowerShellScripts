@@ -4,11 +4,11 @@ Function Get-ExchangeMajorVersion {
     param(
         [Parameter(Mandatory = $true)][object]$AdminDisplayVersion
     )
-    #Function Version 1.1
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
+
     Write-VerboseWriter("Calling: Get-ExchangeMajorVersion")
     Write-VerboseWriter("Passed: {0}" -f $AdminDisplayVersion.ToString())
     if ($AdminDisplayVersion.GetType().Name -eq "string") {

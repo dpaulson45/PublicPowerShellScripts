@@ -1,6 +1,5 @@
 Function Get-ExchangeClientProtocolMappings {
 
-    #Function Version 1.1
     Function Get-ClientProtocolMapping {
         param(
             [string]$FastName,

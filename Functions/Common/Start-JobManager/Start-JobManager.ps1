@@ -11,8 +11,6 @@ Function Start-JobManager {
         [Parameter(Mandatory = $false)][bool]$DisplayReceiveJobInCorrectFunction,
         [Parameter(Mandatory = $false)][bool]$NeedReturnData = $false
     )
-
-    #Function Version 1.6
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1

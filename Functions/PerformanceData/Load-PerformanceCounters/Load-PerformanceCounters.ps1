@@ -10,8 +10,6 @@ Function Load-PerformanceCounters {
         [Parameter(Mandatory = $false)][datetime]$EndTime = [datetime]::MaxValue,
         [Parameter(Mandatory = $false)][array]$Counters
     )
-
-    #Function Version 1.7
     <#
     Required Functions:
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
