@@ -1,0 +1,112 @@
+[
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Create-Mailboxes",
+        "FilePaths": [
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Create-Mailboxes\\Create-Mailboxes.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Dump-StoreWorkerOnMonitors",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Dump-StoreWorkerOnMonitors\\Dump-StoreWorkerOnMonitors.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Dump-StoreWorkerOnPerformanceCounter",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Dump-StoreWorkerOnPerformanceCounter\\Dump-StoreWorkerOnPerformanceCounter.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Get-MachineTlsSettings",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Get-MachineTlsSettings\\Get-MachineTlsSettings.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "New-FunctionTemplate",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\New-FunctionTemplate\\New-FunctionTemplate.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Send-MailStorm",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Send-MailStorm\\Send-MailStorm.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Start-ActiveDirectoryAndClientTracing",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Start-ActiveDirectoryAndClientTracing\\Start-ActiveDirectoryAndClientTracing.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Start-DataCollectionManualStop",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Start-DataCollectionManualStop\\Start-DataCollectionManualStop.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Start-MonitorOnEvents",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Start-MonitorOnEvents\\Start-MonitorOnEvents.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Start-MonitorOnPerformanceCounterThreshold",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Start-MonitorOnPerformanceCounterThreshold\\Start-MonitorOnPerformanceCounterThreshold.ps1"
+            }
+        ]
+    },
+    {
+        "BuildScriptDisabled": true,
+        "ScriptName": "Update-FunctionToScript",
+        "FilePaths":[
+            {
+                "LoadOrder": 0,
+                "Path": "..\\Scripts\\Update-FunctionToScript\\Update-FunctionToScript.ps1"
+            }
+        ]
+    }
+]
