@@ -12,6 +12,7 @@ Function Get-ServerType {
     Write-VerboseWriter("Calling: Get-ServerType")
     $returnServerType = [string]::Empty
     if ($ServerType -like "VMware*") { $returnServerType = "VMware" }
+    elseif ($ServerType -like "*Amazon EC2*") { $returnServerType = "AmazonEC2" }
     elseif ($ServerType -like "*Microsoft Corporation*") { $returnServerType = "HyperV" }
     elseif ($ServerType.Length -gt 0) { $returnServerType = "Physical" }
     else { $returnServerType = "Unknown" }
