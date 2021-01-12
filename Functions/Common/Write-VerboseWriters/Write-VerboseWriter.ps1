@@ -3,7 +3,7 @@ Function Write-VerboseWriter {
         [Parameter(Mandatory = $true)][string]$WriteString
     )
     if ($null -ne $Script:Logger) {
-        $Script:Logger.WriteHost($WriteString)
+        $Script:Logger.WriteVerbose($WriteString)
     } elseif ($null -eq $VerboseFunctionCaller) {
         Write-Verbose $WriteString
     } else {
