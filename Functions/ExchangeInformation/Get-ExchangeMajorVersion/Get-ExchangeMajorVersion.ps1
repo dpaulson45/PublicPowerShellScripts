@@ -17,7 +17,7 @@ Function Get-ExchangeMajorVersion {
     } else {
         $build = $AdminDisplayVersion.Major + ($AdminDisplayVersion.Minor / 10)
     }
-    Write-VerboseWriter("Determing build based off of: {0}" -f $build)
+    Write-VerboseWriter("Determining build based off of: {0}" -f $build)
     $exchangeVersion = [string]::Empty
     switch ($build) {
         14.3 { $exchangeVersion = "Exchange2010" }
