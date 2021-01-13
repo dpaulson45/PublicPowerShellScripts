@@ -1,8 +1,5 @@
 Function Confirm-ExchangeShell {
-    #TODO: Fix this
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidGlobalVars', '', Justification = 'Because it is required to find stuff at times.')]
     [CmdletBinding()]
-    [OutputType("System.Boolean")]
     param(
         [Parameter(Mandatory = $false)][bool]$LoadExchangeShell = $true,
         [Parameter(Mandatory = $false)][scriptblock]$CatchActionFunction
@@ -13,7 +10,23 @@ Function Confirm-ExchangeShell {
         https://raw.githubusercontent.com/dpaulson45/PublicPowerShellScripts/master/Functions/Common/Write-VerboseWriters/Write-VerboseWriter.ps1
     #>
 
+    Function Invoke-CatchActionErrorLoop {
+        param(
+            [int]$CurrentErrors
+        )
+
+        if ($null -ne $CatchActionFunction -and
+            $Error.Count -ne $CurrentErrors) {
+            $i = 0
+            while ($i -lt ($Error.Count - $currentErrors)) {
+                & $CatchActionFunction $Error[$i]
+                $i++
+            }
+        }
+    }
+
     $passed = $false
+    $setupKey = 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup'
     Write-VerboseWriter("Calling: Confirm-ExchangeShell")
     Write-VerboseWriter("Passed: [bool]LoadExchangeShell: {0}" -f $LoadExchangeShell)
 
@@ -22,15 +35,7 @@ Function Confirm-ExchangeShell {
         Get-ExchangeServer -ErrorAction Stop | Out-Null
         Write-VerboseWriter("Exchange PowerShell Module already loaded.")
         $passed = $true
-
-        if ($null -ne $CatchActionFunction -and
-            $Error.Count -ne $currentErrors) {
-            $i = 0
-            while ($i -lt ($Error.Count - $currentErrors)) {
-                & $CatchActionFunction $Error[$i]
-                $i++
-            }
-        }
+        Invoke-CatchActionErrorLoop -CurrentErrors $currentErrors
     } catch {
         Write-VerboseWriter("Failed to run Get-ExchangeServer")
 
@@ -39,18 +44,22 @@ Function Confirm-ExchangeShell {
         }
 
         if (!$LoadExchangeShell) {
-            return $false
+            return [PSCustomObject]@{
+                ShellLoaded = $false
+            }
         }
 
         #Test 32 bit process, as we can't see the registry if that is the case.
         if (![System.Environment]::Is64BitProcess) {
             Write-HostWriter("Open a 64 bit PowerShell process to continue")
-            return $false
+            return [PSCustomObject]@{
+                ShellLoaded = $false
+            }
         }
 
         $currentErrors = $Error.Count
 
-        if (Test-Path 'HKLM:\SOFTWARE\Microsoft\ExchangeServer\v15\Setup') {
+        if (Test-Path "$setupKey") {
             Write-VerboseWriter("We are on Exchange 2013 or newer")
 
             try {
@@ -73,24 +82,30 @@ Function Confirm-ExchangeShell {
                 Get-ExchangeServer -ErrorAction Stop | Out-Null
                 $passed = $true
                 Write-VerboseWriter("Successfully loaded Exchange Management Shell")
-
-                if ($null -ne $CatchActionFunction -and
-                    $currentErrors -ne $Error.Count) {
-                    $i = 0
-                    while ($i -lt ($Error.Count - $currentErrors)) {
-                        & $CatchActionFunction $Error[$i]
-                        $i ++
-                    }
-                }
+                Invoke-CatchActionErrorLoop -CurrentErrors $currentErrors
             } catch {
                 Write-HostWriter("Failed to Load Exchange PowerShell Module...")
                 if ($null -ne $CatchActionFunction) {
                     & $CatchActionFunction
                 }
             }
+        } else {
+            Write-VerboseWriter ("Not on an Exchange or Tools server")
         }
     }
 
-    Write-VerboseWriter("Returned: {0}" -f $passed)
-    return $passed
+    $currentErrors = $Error.Count
+    $returnObject = [PSCustomObject]@{
+        ShellLoaded = $passed
+        Major       = ((Get-ItemProperty -Path $setupKey -Name "MsiProductMajor" -ErrorAction SilentlyContinue).MsiProductMajor)
+        Minor       = ((Get-ItemProperty -Path $setupKey -Name "MsiProductMinor" -ErrorAction SilentlyContinue).MsiProductMinor)
+        Build       = ((Get-ItemProperty -Path $setupKey -Name "MsiBuildMajor" -ErrorAction SilentlyContinue).MsiBuildMajor)
+        Revision    = ((Get-ItemProperty -Path $setupKey -Name "MsiBuildMinor" -ErrorAction SilentlyContinue).MsiBuildMinor)
+        ToolsOnly   = $passed -and (Test-Path $setupKey) -and (!(Test-Path "$setupKey\Services"))
+        RemoteShell = $passed -and (!(Test-Path $setupKey))
+    }
+
+    Invoke-CatchActionErrorLoop -CurrentErrors $currentErrors
+
+    return $returnObject
 }
