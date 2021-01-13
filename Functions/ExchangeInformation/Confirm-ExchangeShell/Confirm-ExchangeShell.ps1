@@ -101,7 +101,7 @@ Function Confirm-ExchangeShell {
         Minor       = ((Get-ItemProperty -Path $setupKey -Name "MsiProductMinor" -ErrorAction SilentlyContinue).MsiProductMinor)
         Build       = ((Get-ItemProperty -Path $setupKey -Name "MsiBuildMajor" -ErrorAction SilentlyContinue).MsiBuildMajor)
         Revision    = ((Get-ItemProperty -Path $setupKey -Name "MsiBuildMinor" -ErrorAction SilentlyContinue).MsiBuildMinor)
-        ToolsOnly   = $passed -and (Test-Path $setupKey) -and (!(Test-Path "$setupKey\Services"))
+        ToolsOnly   = $passed -and (Test-Path $setupKey) -and ($null -eq (Get-ItemProperty -Path $setupKey -Name "Services" -ErrorAction SilentlyContinue))
         RemoteShell = $passed -and (!(Test-Path $setupKey))
     }
 
