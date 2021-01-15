@@ -39,14 +39,15 @@ Function New-LoggerObject {
     #
     ########################
 
-
     ########## Parameter Binding Exceptions ##############
     if ($LogDirectory -eq ".") {
         $LogDirectory = (Get-Location).Path
     }
+
     if ([string]::IsNullOrWhiteSpace($LogName)) {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogName"
     }
+
     if (!(Test-Path $LogDirectory)) {
         throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogDirectory"
     }
@@ -72,6 +73,7 @@ Function New-LoggerObject {
     if ($null -ne $HostFunctionCaller) {
         $loggerObject | Add-Member -MemberType ScriptMethod -Name "HostFunctionCaller" -Value $HostFunctionCaller
     }
+
     if ($null -ne $VerboseFunctionCaller) {
         $loggerObject | Add-Member -MemberType ScriptMethod -Name "VerboseFunctionCaller" -Value $VerboseFunctionCaller
     }
@@ -80,6 +82,7 @@ Function New-LoggerObject {
         param(
             [object]$LoggingString
         )
+
         if ($null -eq $LoggingString) {
             throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
         }
@@ -97,6 +100,7 @@ Function New-LoggerObject {
         param(
             [object]$LoggingString
         )
+
         if ($null -eq $LoggingString) {
             throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
         }
@@ -113,6 +117,7 @@ Function New-LoggerObject {
         param(
             [object]$LoggingString
         )
+
         if ($null -eq $LoggingString) {
             throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LoggingString"
         }
@@ -127,6 +132,7 @@ Function New-LoggerObject {
     $loggerObject | Add-Member -MemberType ScriptMethod -Name "UpdateFileLocation" -Value {
 
         if ($null -eq $this.FullPath) {
+
             if ($this.IncludeDateTimeToFileName) {
                 $this.InstanceBaseName = "{0}_{1}" -f $this.FileName, ((Get-Date).ToString('yyyyMMddHHmmss'))
                 $this.FullPath = "{0}\{1}.txt" -f $this.FileDirectory, $this.InstanceBaseName
@@ -158,6 +164,7 @@ Function New-LoggerObject {
     $loggerObject | Add-Member -MemberType ScriptMethod -Name "CheckFileSize" -Value {
 
         $item = Get-ChildItem $this.FullPath
+
         if (($item.Length / 1MB) -gt $this.MaxFileSizeInMB) {
             $this.UpdateFileLocation()
         }
@@ -167,6 +174,7 @@ Function New-LoggerObject {
 
         $filter = "{0}*" -f $this.InstanceBaseName
         $items = Get-ChildItem -Path $this.FileDirectory | Where-Object { $_.Name -like $filter }
+
         if ($items.Count -gt $this.NumberOfLogsToKeep) {
             do {
                 $items | Sort-Object LastWriteTime | Select-Object -First 1 | Remove-Item -Force
