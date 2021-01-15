@@ -49,7 +49,12 @@ Function New-LoggerObject {
     }
 
     if (!(Test-Path $LogDirectory)) {
-        throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogDirectory"
+
+        try {
+            New-Item -Path $LogDirectory -ItemType Directory | Out-Null
+        } catch {
+            throw [System.Management.Automation.ParameterBindingException] "Failed to provide valid LogDirectory"
+        }
     }
 
     $loggerObject = New-Object PSCustomObject
