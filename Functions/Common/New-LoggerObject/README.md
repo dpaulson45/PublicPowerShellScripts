@@ -5,9 +5,9 @@ Function that is used to create an object for you to be able to write data withi
 
 Parameter | Description 
 ----------|------------
-LogDirectory | Provide a valid directory where we are going to be writting out the log file. Default is current running path. 
+LogDirectory | Provide a valid directory where we are going to be writing out the log file. Default is current running path. 
 LogName | Provide a custom name for the log file. Default "Script_Logging". 
-EnableDateTime | Adds the current date and time to the line that you are writting out to the screen and log file. Default True.
+EnableDateTime | Adds the current date and time to the line that you are writing out to the screen and log file. Default True.
 IncludeDateTimeToFileName | Appends the date and time in the following format yyyyMMddHHmmss to the log file name. Default True.
 MaxFileSizeInMB | The max size a file will get to before rolling over to the next log file. Default 10 MB. 
 CheckSizeIntervalMinutes | The interval that we check the size of the log file. Default 10 Minutes. 
@@ -28,7 +28,9 @@ UpdateFileLocation() | Updates the file location if a new file is needed to be c
 WriteHost(string WriteString) | Used to call the WriteHostWriter() and ToLog() for what you wish to log. 
 WriteVerbose(string WriteString) | used to call WriteVerboseWriter() and ToLog() for what you wish to log. Only information will be displayed if VerboseEnabled is set to true. 
 WriteHostWriter(string WriteString) | Used to call Write-Host. 
-WriteVerboseWriter(string WriteString) | Used to call Write-Host. Will only dispaly information if VerboseEnabled is set to true. 
+WriteVerboseWriter(string WriteString) | Used to call Write-Host. Will only display information if VerboseEnabled is set to true.
+DisableLogger() | Disable the logger from being able to do anything.
+EnableLogger() | Enable the logger to work as normal.
 
 # How To Use 
 
