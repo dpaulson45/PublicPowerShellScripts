@@ -78,11 +78,7 @@ Function Get-AllNicInformation {
             return $networkIpConfiguration
         } catch {
             Write-VerboseWriter("Failed to run Get-NetIPConfiguration. Error {0}." -f $Error[0].Exception)
-
-            if ($null -ne $CatchActionFunction) {
-                & $CatchActionFunction
-            }
-
+            #just rethrow as caller will handle the catch
             throw
         }
     }
@@ -250,16 +246,22 @@ Function Get-AllNicInformation {
         try {
             $networkConfiguration = Get-NetworkConfiguration -ComputerName $ComputerName
         } catch {
+
             if ($CatchActionFunction -ne $null) {
                 & $CatchActionFunction
             }
 
-            if ($ComputerFQDN -ne [string]::Empty -and
-                $ComputerName -ne $null) {
-                $networkConfiguration = Get-NetworkConfiguration -ComputerName $ComputerFQDN
-            } else {
-                $bypassCatchActions = $true
-                Write-VerboseWriter("No FQDN was passed, going to rethrow error.")
+            try {
+                if ($ComputerFQDN -ne [string]::Empty -and
+                    $null -ne $ComputerName) {
+                    $networkConfiguration = Get-NetworkConfiguration -ComputerName $ComputerFQDN
+                } else {
+                    $bypassCatchActions = $true
+                    Write-VerboseWriter("No FQDN was passed, going to rethrow error.")
+                    throw
+                }
+            } catch {
+                #Just throw again
                 throw
             }
         }
