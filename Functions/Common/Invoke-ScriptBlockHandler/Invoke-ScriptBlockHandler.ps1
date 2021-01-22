@@ -18,7 +18,7 @@ Function Invoke-ScriptBlockHandler {
         Write-VerboseWriter($ScriptBlockDescription)
     }
     try {
-        if ($ComputerName -ne $env:COMPUTERNAME) {
+        if (($ComputerName).Split(".")[0] -ne $env:COMPUTERNAME) {
             $params = @{
                 ComputerName = $ComputerName
                 ScriptBlock  = $ScriptBlock
