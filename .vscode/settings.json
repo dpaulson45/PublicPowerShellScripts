@@ -1,0 +1,36 @@
+{
+    "powershell.codeFormatting.autoCorrectAliases": true,
+    "powershell.codeFormatting.preset": "OTBS",
+    "powershell.codeFormatting.trimWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.useCorrectCasing": true,
+    "powershell.codeFormatting.newLineAfterCloseBrace": false,
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+    "powershell.codeFormatting.alignPropertyValuePairs": true,
+    "powershell.codeFormatting.ignoreOneLineBlock": true,
+    "powershell.codeFormatting.newLineAfterOpenBrace": true,
+    "powershell.codeFormatting.openBraceOnSameLine": true,
+    "powershell.codeFormatting.whitespaceAfterSeparator": true,
+    "powershell.codeFormatting.whitespaceAroundOperator": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+    "powershell.codeFormatting.whitespaceBetweenParameters": false,
+    "powershell.codeFormatting.whitespaceInsideBrace": true,
+    "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+    "files.trimTrailingWhitespace": true,
+    "files.encoding": "utf8",
+    "[powershell]": {
+        "files.encoding": "utf8bom"
+    },
+    "cSpell.customDictionaries": {
+        "cspell-words": {
+            "name": "cspell-words",
+            "path": "${workspaceRoot}/.build/cspell-words.txt",
+            "description": "Words used in this project",
+            "addWords": true
+          },
+          "custom": true, // Enable the `custom` dictionary
+          "internal-terms": false // Disable the `internal-terms` dictionary
+    },
+    "cSpell.caseSensitive": true,
+    "editor.detectIndentation": false
+}
